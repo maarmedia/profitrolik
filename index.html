@@ -78,6 +78,7 @@ p{margin:0}
 .list{display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r);overflow:hidden}
 .item{display:flex;align-items:center;gap:12px;padding:13px 14px;text-align:left;width:100%;border-top:1px solid var(--line)}
 .item:first-child{border-top:0}
+a.item{text-decoration:none;color:inherit}
 .item .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .item .txt b{font-weight:700;font-size:15px;line-height:1.3}
 .item .txt span{font-size:13px;color:var(--muted)}
@@ -119,6 +120,13 @@ p{margin:0}
 .opt{display:flex;align-items:center;gap:12px;text-align:left;width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px;font-weight:600}
 .opt:hover{border-color:var(--muted)}
 .opt .em{flex:none;width:30px;text-align:center;font-size:20px}
+.opt[aria-pressed="true"]{border-color:var(--glaze);background:rgba(229,50,59,.12)}
+.opt .tick{margin-left:auto;flex:none;width:22px;height:22px;border-radius:7px;border:1.5px solid var(--line);display:grid;place-items:center;color:#fff}
+.opt[aria-pressed="true"] .tick{background:var(--glaze);border-color:var(--glaze)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.zones{display:flex;flex-direction:column;gap:9px}
+.zone{display:grid;grid-template-columns:minmax(0,1fr) 46%;gap:10px;align-items:center;font-size:13px;font-weight:600}
+.zone .bar i{background:var(--glaze)}
 
 /* result */
 .level{display:flex;align-items:center;gap:14px}
@@ -265,47 +273,117 @@ const store={
 };
 
 /* ---------- state ---------- */
-const S={tab:"home",done:{},profile:null,course:null,filter:"all",q:"",quiz:null,name:"Участник"};
+const S={tab:"home",done:{},profile:null,history:[],course:null,filter:"all",q:"",quiz:null,name:"Участник"};
 if(TG){try{TG.ready();TG.expand();const u=TG.initDataUnsafe&&TG.initDataUnsafe.user;if(u&&u.first_name)S.name=u.first_name}catch(e){}}
 
 /* ---------- quiz ---------- */
+const AREAS={
+  ideas:{n:"Идеи и темы",tags:["ideas","competitors","plan","start"]},
+  packaging:{n:"Обложки и названия",tags:["packaging","ctr"]},
+  script:{n:"Сценарий и удержание",tags:["script","retention"]},
+  camera:{n:"Работа в кадре",tags:["camera"]},
+  gear:{n:"Свет, звук, техника",tags:["gear"]},
+  editing:{n:"Монтаж",tags:["editing"]},
+  growth:{n:"Алгоритмы и аналитика",tags:["algo","seo","views","analytics"]},
+  regular:{n:"Регулярность и стратегия",tags:["strategy","shorts","plan"]},
+  sales:{n:"Продажи с канала",tags:["sales","funnel","audience"]},
+  clients:{n:"Клиенты и команда",tags:["producer","clients","client_work","team"]}
+};
 const QUIZ=[
-  {k:"stage",q:"Где сейчас твой канал?",o:[
-    ["none","🌱","Канала ещё нет или только завёл"],["t","🥟","До 1&nbsp;000 подписчиков"],["p","🔥","От 1&nbsp;000 до 10&nbsp;000"],["r","👑","Больше 10&nbsp;000"],["prod","💼","Я делаю каналы для клиентов"]]},
-  {k:"pain",q:"Что сейчас мешает больше всего?",o:[
-    ["ideas","💡","Не знаю, о чём снимать"],["views","📉","Мало просмотров"],["camera","😬","Неловко или страшно в кадре"],["retention","⏱","Ролики не досматривают"],["money","💸","Канал не приносит денег"],["clients","🤝","Хочу брать клиентов на продюсирование"]]},
-  {k:"cam",q:"Как тебе в кадре?",o:[
-    ["fear","🫣","Боюсь камеры, зажимаюсь"],["flat","😐","Нормально, но звучу скучно"],["ok","😎","Уверенно, хочу прокачать подачу"],["off","🙈","Я не снимаюсь в кадре"]]},
-  {k:"goal",q:"Главная цель на ближайшие 3 месяца?",o:[
-    ["first","🎯","Первые 1&nbsp;000 подписчиков"],["stable","📈","Стабильные просмотры на каждом ролике"],["income","💰","Доход с канала"],["clients","🧾","Первые клиенты как продюсер"]]},
-  {k:"time",q:"Сколько времени в неделю готов учиться?",o:[
-    ["s","☕","1-2 часа"],["m","⏳","3-5 часов"],["l","🚀","Больше 5 часов"]]}
+  {k:"stage",q:"Где сейчас твой канал?",o:[["none","🌱","Канала ещё нет или только завёл"],["t","🥟","До 1&nbsp;000 подписчиков"],["p","🔥","От 1&nbsp;000 до 10&nbsp;000"],["r","👑","Больше 10&nbsp;000"],["prod","💼","Я делаю каналы для клиентов"]]},
+  {k:"exp",q:"Сколько роликов ты уже выпустил?",o:[["0","🫙","Пока ни одного"],["few","✌️","От 1 до 10"],["mid","📚","От 10 до 50"],["many","🏭","Больше 50"]]},
+  {k:"kind",q:"Какой у тебя канал?",o:[["expert","🎓","Экспертный: продаю услуги или продукт"],["blog","🎥","Блог: жизнь, хобби, развлечения"],["unsure","🤔","Пока не определился с темой"],["clients","💼","Веду каналы клиентов"]]},
+  {k:"format",q:"Что снимаешь?",o:[["long","🎬","Длинные ролики"],["shorts","📱","Shorts"],["both","🔀","И то, и другое"],["none","🕳","Пока ничего"]]},
+  {k:"freq",q:"Как часто выходят ролики?",skip:a=>a.exp==="0",o:[["rare","🐢","Реже раза в месяц или с большими перерывами"],["month","📅","1-3 ролика в месяц"],["week","⚡","Раз в неделю и чаще"]]},
+  {k:"hard",multi:true,q:"Что даётся тяжелее всего?",hint:"Выбери всё, что про тебя. Это главный вопрос: по нему подбираются уроки.",o:[["ideas","💡","Придумать тему, которая зайдёт"],["script","📝","Написать сценарий"],["camera","😬","Говорить в кадре"],["gear","🎙","Свет, звук, техника"],["editing","✂️","Монтаж"],["packaging","🖼","Обложка и название"],["growth","📊","Понять аналитику и алгоритмы"],["regular","🔁","Выпускать регулярно"],["sales","💸","Продавать через канал"],["clients","🤝","Находить клиентов"]]},
+  {k:"main",q:"А что мешает больше всего прямо сейчас?",hint:"Один ответ: с этого начнём.",o:[["ideas","💡","Не знаю, о чём снимать"],["views","📉","Мало просмотров"],["retention","⏱","Ролики не досматривают"],["camera","😬","Неловко или страшно в кадре"],["regular","🔁","Не хватает системы и регулярности"],["money","💸","Канал не приносит денег"],["clients","🤝","Нет клиентов на продюсирование"]]},
+  {k:"stats",q:"Что показывает аналитика твоих роликов?",skip:a=>a.exp==="0"||a.stage==="none",o:[["ctr","🖱","Мало кликов: обложку видят, но не нажимают"],["ret","🚪","Смотрят первые секунды и уходят"],["unknown","🤷","Не смотрю аналитику или не понимаю её"],["ok","👍","В целом нормально, хочу расти"]]},
+  {k:"cam",q:"Как тебе в кадре?",o:[["fear","🫣","Боюсь камеры, зажимаюсь"],["flat","😐","Нормально, но звучу скучно"],["ok","😎","Уверенно, хочу прокачать подачу"],["off","🙈","Я не снимаюсь в кадре"]]},
+  {k:"goal",q:"Главная цель на ближайшие 3 месяца?",o:[["first","🎯","Первые 1&nbsp;000 подписчиков"],["stable","📈","Стабильные просмотры на каждом ролике"],["income","💰","Доход с канала"],["clients","🧾","Первые клиенты как продюсер"]]},
+  {k:"time",q:"Сколько времени в неделю готов учиться?",o:[["s","☕","1-2 часа"],["m","⏳","3-5 часов"],["l","🚀","Больше 5 часов"]]}
 ];
-const PAIN={ideas:{ideas:3,competitors:2,plan:2,strategy:1},views:{views:3,algo:2,seo:2,packaging:2,ctr:2},camera:{},retention:{script:3,retention:3,editing:2},money:{sales:3,funnel:3,audience:2},clients:{producer:4,clients:2,sales:1}};
-const GOAL={first:{start:3,packaging:2,plan:2,ideas:1,gear:1},stable:{views:2,ctr:2,analytics:2,retention:2},income:{sales:2,funnel:2,audience:2},clients:{producer:3,clients:2,client_work:2}};
+const qList=a=>QUIZ.filter(q=>!q.skip||!q.skip(a));
 const CAMB={fear:{1:5,2:3,3:1,4:0},flat:{1:1,2:5,3:4,4:1},ok:{1:0,2:1,3:2,4:4},off:{1:0,2:0,3:0,4:0}};
-const LEN={s:6,m:10,l:14};
-
+const LEN={s:[4,4],m:[5,7],l:[6,10]};
+const MAIN_AREA={ideas:{ideas:5},views:{packaging:4,growth:4},retention:{script:5,editing:2},camera:{camera:5},regular:{regular:5},money:{sales:5},clients:{clients:6}};
+const MAIN_WHY={ideas:"Не знаешь, о чём снимать: здесь, где брать темы",views:"Мало просмотров: урок про то, что их даёт",retention:"Ролики не досматривают: урок про удержание",camera:"Неловко в кадре: этот урок снимает зажим",regular:"Нет системы: урок про план и регулярность",money:"Канал не продаёт: урок про продажи с YouTube",clients:"Нет клиентов: урок прямо про это"};
+const DIAG={
+  ideas:"Сейчас тебе мешает не техника, а темы. Начни с того, как находить идеи, которые уже заходят в твоей нише.",
+  views:"Ролики есть, но их не видят. Главное сейчас: обложка, название и понимание, как YouTube продвигает видео.",
+  retention:"Зрители приходят, но уходят. Работаем со сценарием, хуком и темпом монтажа.",
+  camera:"Главный тормоз сейчас в кадре. Пара коротких уроков с упражнениями снимут зажим быстрее, чем кажется.",
+  regular:"Знаний хватает, не хватает системы. Собираем контент-план и ритм, который ты потянешь.",
+  money:"Канал должен продавать. Разберём аудиторию, оффер и воронку от просмотра до покупки.",
+  clients:"Ты идёшь в продюсирование. Начнём с поиска клиентов и первых продающих звонков."
+};
+const GOAL_TXT={first:"первые 1&nbsp;000 подписчиков",stable:"стабильные просмотры",income:"доход с канала",clients:"первые клиенты"};
+const POSTS=[
+  {t:"Чек-лист идеального сценария",s:"PDF в «Полезных материалах»",a:["script"],h:()=>link(TOPICS.materials,100),i:"✅"},
+  {t:"Шаблоны структуры сценария",s:"Простая и расширенная структура",a:["script","regular"],h:()=>link(TOPICS.materials,101),i:"📝"},
+  {t:"Таблица анализа конкурентов",s:"Найти темы, которые уже заходят",a:["ideas","growth"],h:()=>link(TOPICS.materials,101),i:"📊"},
+  {t:"Дегустация: разбор твоего ролика",s:"Принеси ролик, разберём вживую",a:["packaging","script","camera","editing"],h:()=>link(TOPICS.tasting),i:"🍰"},
+  {t:"Разбор начинки",s:"Разборы чужих успешных роликов",a:["ideas","packaging","growth"],h:()=>link(TOPICS.filling),i:"🔍"},
+  {t:"Рецепт недели",s:"Одно задание на неделю, чтобы держать ритм",a:["regular","ideas"],h:()=>link(TOPICS.recipe),i:"📅"},
+  {t:"Записи эфиров",s:"Разборы и ответы на вопросы",a:["sales","growth","clients"],h:()=>link(TOPICS.streams),i:"🎙"},
+  {t:"Итоги пекарни",s:"Результаты участников: что сработало",a:["sales","regular","growth"],h:()=>link(TOPICS.bakery),i:"🏆"}
+];
+function areaScores(a){
+  const W={}; Object.keys(AREAS).forEach(k=>W[k]=0);
+  const add=(k,v)=>{W[k]+=v};
+  (a.hard||[]).forEach(k=>add(k,3));
+  Object.entries(MAIN_AREA[a.main]||{}).forEach(([k,v])=>add(k,v));
+  if(a.stats==="ctr") add("packaging",3);
+  if(a.stats==="ret"){add("script",3);add("editing",1)}
+  if(a.stats==="unknown") add("growth",3);
+  if(a.stats==="ok"){add("growth",1);add("sales",1)}
+  if(a.exp==="0"||a.stage==="none"){add("ideas",2);add("gear",2);add("editing",1)}
+  if(a.freq==="rare") add("regular",2);
+  if(a.kind==="expert") add("sales",2);
+  if(a.kind==="unsure") add("ideas",2);
+  if(a.kind==="clients") add("clients",3);
+  if(a.format==="shorts"||a.format==="both") add("regular",1);
+  if(a.goal==="first"){add("ideas",1);add("packaging",1)}
+  if(a.goal==="stable"){add("growth",2);add("regular",1)}
+  if(a.goal==="income") add("sales",3);
+  if(a.goal==="clients") add("clients",3);
+  if(a.cam==="fear") add("camera",3);
+  if(a.cam==="flat") add("camera",2);
+  if(a.cam==="off") W.camera=0;
+  if(a.stage==="prod") add("clients",3);
+  return W;
+}
+const tagArea=t=>Object.keys(AREAS).filter(k=>AREAS[k].tags.includes(t));
 function buildTrack(a){
   const lvl=a.stage==="none"?"t":a.stage;
-  const isProd=lvl==="prod"||a.pain==="clients"||a.goal==="clients";
+  const W=areaScores(a);
+  const isProd=lvl==="prod"||W.clients>=3;
+  const mainAreas=Object.keys(MAIN_AREA[a.main]||{});
+  const whyFor=k=>!k?"Подходит под твой уровень":mainAreas.includes(k)?MAIN_WHY[a.main]:(a.hard||[]).includes(k)?`Ты отметил, что тяжело даётся: ${AREAS[k].n.toLowerCase()}`:`Подтянет зону «${AREAS[k].n}»`;
+  const ord=x=>x.l.c==="camera"?x.l.n*0.6:x.l.c==="producer"?x.l.n+(lvl==="prod"?-30:30):x.l.n;
   const score=l=>{
-    let s=0;
-    if(l.c==="producer"){ if(!isProd) return -1; s+=6+(lvl==="prod"?2:0); }
-    else if(l.c==="camera"){ s+=CAMB[a.cam][l.b]||0; if(a.pain==="camera") s+=3; if(a.cam==="off") return -1; }
-    else{ const ul=lvl==="prod"?"p":lvl; if(l.lvl.includes(ul)) s+=2; else s-=2; if(a.stage==="none"&&l.n<=6) s+=3; }
-    const pw=PAIN[a.pain]||{},gw=GOAL[a.goal]||{};
-    l.tags.forEach(t=>{s+=(pw[t]||0)+(gw[t]||0)});
-    return s;
+    let s=0,best=0,area=null;
+    [...new Set(l.tags.flatMap(tagArea))].forEach(k=>{s+=W[k]; if(W[k]>best){best=W[k];area=k}});
+    if(l.c==="camera"){ if(a.cam==="off"||!W.camera) return null; s=W.camera*0.8+((CAMB[a.cam]||{})[l.b]||0); area="camera"; }
+    else if(l.c==="producer"){ if(!isProd) return null; if(lvl==="prod") s+=3; }
+    else { const ul=lvl==="prod"?"p":lvl; s+=l.lvl.includes(ul)?2:-3; if((a.exp==="0"||a.stage==="none")&&l.n<=6) s+=3; }
+    return {l,s,area};
   };
-  const ranked=L.map(l=>({l,s:score(l)})).filter(x=>x.s>0).sort((x,y)=>y.s-x.s);
-  let pick=ranked.slice(0,LEN[a.time]).map(x=>x.l);
-  if(!pick.length) pick=courseLessons("school").slice(0,LEN[a.time]);
-  const off={school:0,camera:-.4,producer:lvl==="prod"?-30:30};
-  pick.sort((x,y)=>(x.n+off[x.c]*(x.c==="camera"?x.n:1))-(y.n+off[y.c]*(y.c==="camera"?y.n:1)));
-  const focus={ideas:"идеи и контент-план",views:"просмотры и упаковку",camera:"уверенность в кадре",retention:"удержание и сценарий",money:"продажи с канала",clients:"поиск клиентов"}[a.pain];
-  const goal={first:"первые 1&nbsp;000 подписчиков",stable:"стабильные просмотры",income:"доход с канала",clients:"первых клиентов"}[a.goal];
-  return {lvl,ids:pick.map(l=>l.id),focus,goal,at:Date.now()};
+  const ranked=L.map(score).filter(x=>x&&x.s>1);
+  ranked.sort((x,y)=>y.s-x.s||ord(x)-ord(y));
+  const [np,ne]=LEN[a.time]||LEN.m; const prio=[],extra=[]; let camP=0,camE=0;
+  for(const x of ranked){
+    const cam=x.l.c==="camera";
+    if(prio.length<np&&!(cam&&camP>=2)){ prio.push(x); if(cam) camP++; continue; }
+    if(extra.length<ne&&!(cam&&camE>=3)){ extra.push(x); if(cam) camE++; }
+    if(prio.length>=np&&extra.length>=ne) break;
+  }
+  if(!prio.length) courseLessons("school").slice(0,np).forEach(l=>prio.push({l,s:1,area:null}));
+  prio.sort((x,y)=>ord(x)-ord(y)); extra.sort((x,y)=>ord(x)-ord(y));
+  const why={}; prio.concat(extra).forEach(x=>why[x.l.id]=whyFor(x.area));
+  const areas=Object.entries(W).filter(([k,v])=>v>0).sort((x,y)=>y[1]-x[1]).slice(0,5);
+  const posts=POSTS.map((p,i)=>({i,s:p.a.reduce((t,k)=>t+(W[k]||0),0)})).filter(x=>x.s>0).sort((x,y)=>y.s-x.s).slice(0,4).map(x=>x.i);
+  return {v:3,lvl,ids:prio.concat(extra).map(x=>x.l.id),first:prio.length,why,areas,posts,main:a.main,
+    focus:areas.slice(0,2).map(([k])=>AREAS[k].n.toLowerCase()).join(" и ")||"базу",goal:GOAL_TXT[a.goal]||"",diag:DIAG[a.main]||"",answers:a,at:Date.now()};
 }
 
 /* ---------- helpers ---------- */
@@ -333,13 +411,25 @@ const I={
 const DRIP='<div class="drip" aria-hidden="true"><svg viewBox="0 0 400 34" preserveAspectRatio="none"><path fill="currentColor" d="M0 0h400v10c-14 0-16 6-26 6s-10-6-24-6-12 18-24 18-10-18-22-18-14 7-28 7-14-7-26-7-12 22-24 22-12-22-26-22-12 5-26 5-14-5-26-5-12 14-24 14-12-14-24-14-14 6-28 6-12-6-24-6-10 12-22 12S12 10 0 10z"/></svg></div>';
 
 /* ---------- screens ---------- */
+function planBody(t){
+  const p=S.profile, why=p.why||{}, f=p.first||0;
+  const it=(id,i)=>itemLesson(byId[id],{idx:i+1,why:why[id],now:i===t.cur});
+  const zones=(p.areas||[]).length?`<section class="section"><h2>Твои зоны роста</h2><div class="card zones">${p.areas.map(([k,v])=>`<div class="zone"><span>${AREAS[k]?AREAS[k].n:k}</span><div class="bar"><i style="width:${Math.round(v/p.areas[0][1]*100)}%"></i></div></div>`).join("")}<p class="muted" style="font-size:12px">Чем длиннее полоска, тем больше пробел. По ним и подобраны уроки.</p></div></section>`:"";
+  const lists=f?`<section class="section"><h2>🔥 Приоритетные уроки</h2><p class="muted" style="margin-top:-6px">Специально для тебя: начни с них.</p><div class="list">${t.ids.slice(0,f).map(it).join("")}</div></section>
+  ${t.ids.length>f?`<section class="section"><h2>➕ Дополнительные уроки</h2><p class="muted" style="margin-top:-6px">Тоже помогут, когда закончишь приоритетные.</p><div class="list">${t.ids.slice(f).map((id,j)=>it(id,j+f)).join("")}</div></section>`:""}`
+    :`<div class="list" style="margin-top:18px">${t.ids.map(it).join("")}</div>`;
+  const posts=(p.posts||[]).length?`<section class="section"><h2>📌 Посты и материалы для тебя</h2><div class="list">${p.posts.map(i=>POSTS[i]).filter(Boolean).map(x=>`<a class="item" href="${x.h()}" target="_blank" rel="noopener"><span class="num">${x.i}</span><span class="txt"><b>${x.t}</b><span>${x.s}</span></span>${I.chev}</a>`).join("")}</div></section>`:"";
+  return zones+lists+posts;
+}
+function fmtDate(ts){try{return new Date(ts).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}catch(e){return""}}
+
 function itemLesson(l,opt={}){
   const d=S.done[l.id]; const cls=opt.locked?"lock":d?"done":opt.now?"now":"";
   const mark=opt.locked?I.lock:d?I.check:(opt.idx??l.n);
-  const sub=opt.course?COURSES[l.c].title+" · "+mins(l.m):mins(l.m);
+  const sub=opt.why?opt.why:(opt.course?COURSES[l.c].title+" · "+mins(l.m):mins(l.m));
   return `<button class="item${opt.locked?" locked":""}" data-lesson="${l.id}"${opt.locked?' data-locked="1"':""}>
     <span class="num ${cls}">${mark}</span>
-    <span class="txt"><b>${esc(l.t)}</b><span>${esc(sub)}</span></span>${I.chev}</button>`;
+    <span class="txt"><b>${esc(l.t)}</b><span>${opt.why?sub:esc(sub)}</span></span>${I.chev}</button>`;
 }
 function courseCard(c){
   const ls=courseLessons(c.id),dn=doneCount(ls.map(l=>l.id)),tot=ls.length,m=ls.reduce((s,l)=>s+(l.m||0),0);
@@ -358,20 +448,21 @@ function Home(){
     hero=`<section class="hero">${DRIP}
       <span class="eyebrow">Твой план обучения</span>
       <h1>Подбери уроки под себя</h1>
-      <p class="muted">5 вопросов, одна минута. Получишь свой трек из уроков всех курсов клуба: в том порядке, в котором их стоит смотреть именно тебе.</p>
+      <p class="muted">11 коротких вопросов про твой канал, опыт и то, что даётся тяжелее всего. Получишь план: приоритетные уроки, дополнительные и посты из клуба, подобранные под твои пробелы.</p>
       <button class="btn primary block" data-act="quiz">Пройти тест</button>
     </section>`;
   }else{
     const lv=LEVELS[S.profile.lvl];
     const cur=t.cur>=0?byId[t.ids[t.cur]]:null;
     hero=`<section class="hero">${DRIP}
-      <div class="row between"><span class="eyebrow">Твой трек · ${lv.icon} ${lv.name}</span><span class="chip nums">${t.done} / ${t.total}</span></div>
-      <h1>${cur?"Следующий урок":"Трек пройден"}</h1>
+      <div class="row between"><span class="eyebrow">Мой план · ${lv.icon} ${lv.name}</span><span class="chip nums">${t.done} / ${t.total}</span></div>
+      <h1>${cur?(t.cur<(S.profile.first||t.total)?"Следующий приоритетный урок":"Следующий урок"):"План пройден"}</h1>
       ${cur?`<button class="item" style="background:var(--surface-2);border-radius:14px;border:0" data-lesson="${cur.id}">
-        <span class="num now">${t.cur+1}</span><span class="txt"><b>${esc(cur.t)}</b><span>${COURSES[cur.c].title} · ${mins(cur.m)}</span></span>${I.chev}</button>`
-        :`<p class="muted">Ты прошёл все уроки трека. Пройди тест заново, и мы соберём следующий уровень.</p>`}
+        <span class="num now">${t.cur+1}</span><span class="txt"><b>${esc(cur.t)}</b><span>${(S.profile.why&&S.profile.why[cur.id])||COURSES[cur.c].title+" · "+mins(cur.m)}</span></span>${I.chev}</button>`
+        :`<p class="muted">Ты прошёл все уроки плана. Пройди тест заново, и мы соберём следующий.</p>`}
       <div class="bar"><i style="width:${t.done/t.total*100}%"></i></div>
-      <div class="row"><button class="btn ghost" style="flex:1" data-act="track">Весь трек</button>${cur?"":`<button class="btn primary" style="flex:1" data-act="quiz">Новый трек</button>`}</div>
+      <div class="row"><button class="btn ghost" style="flex:1" data-act="track">Мой план</button><button class="btn ${cur?"ghost":"primary"}" style="flex:1" data-act="quiz">Пройти тест заново</button></div>
+      ${S.profile.at?`<p class="muted" style="font-size:12px">Тест пройден ${fmtDate(S.profile.at)}. Проходи его раз в месяц: по мере роста план меняется.</p>`:""}
     </section>`;
   }
   const lv=S.profile?LEVELS[S.profile.lvl]:null;
@@ -391,15 +482,16 @@ function Home(){
 
 function Track(){
   const t=trackState(); if(!t) return Home();
-  const lv=LEVELS[S.profile.lvl];
+  const p=S.profile, lv=LEVELS[p.lvl];
   return `<button class="back" data-tab="home">← Назад</button>
   <section class="stack"><span class="eyebrow">${lv.icon} ${lv.name} · ${lv.line}</span>
-    <h1>Твой трек</h1>
-    <p class="muted">Фокус на ${S.profile.focus}. Цель: ${S.profile.goal}. Открыт один урок: посмотри его и отметь просмотренным, тогда откроется следующий. Все курсы целиком всегда доступны во вкладке «Курсы».</p>
+    <h1>Мой план</h1>
+    ${p.diag?`<p>${p.diag}</p>`:`<p class="muted">Фокус на ${p.focus}. Цель: ${p.goal}.</p>`}
     <div class="row"><div class="bar" style="flex:1"><i style="width:${t.done/t.total*100}%"></i></div><span class="nums muted">${t.done} / ${t.total}</span></div>
   </section>
-  <div class="list" style="margin-top:18px">${t.ids.map((id,i)=>itemLesson(byId[id],{idx:i+1,course:1,now:i===t.cur,locked:t.cur>=0&&i>t.cur})).join("")}</div>
-  <button class="btn ghost block" style="margin-top:14px" data-act="quiz">Пройти тест заново</button>`;
+  ${planBody(t)}
+  <section class="section"><button class="btn ghost block" data-act="quiz">Пройти тест заново</button>
+  ${p.at?`<p class="muted" style="font-size:12px;text-align:center">Последний тест: ${fmtDate(p.at)}. Ответишь по-другому, получишь новую подборку.</p>`:""}</section>`;
 }
 
 function Courses(){
@@ -470,8 +562,9 @@ function Me(){
     </div>
     <div class="list">${Object.values(COURSES).map(c=>{const ls=courseLessons(c.id),d=doneCount(ls.map(l=>l.id));return `<button class="item" data-course="${c.id}"><span class="num">${c.icon}</span><span class="txt"><b>${c.title}</b><span class="nums">${d} из ${ls.length}</span></span>${I.chev}</button>`}).join("")}</div>
   </section>
+  ${(S.history||[]).length?`<section class="section"><h2>История тестов</h2><div class="list">${S.history.slice(0,5).map(h=>`<div class="item"><span class="num">${LEVELS[h.lvl]?LEVELS[h.lvl].icon:"🥐"}</span><span class="txt"><b>${fmtDate(h.at)} · ${LEVELS[h.lvl]?LEVELS[h.lvl].name:""}</b><span>${(h.top||[]).map(k=>AREAS[k]?AREAS[k].n:k).join(", ")}</span></span></div>`).join("")}</div></section>`:""}
   <section class="section"><h2>Настройки</h2><div class="list">
-    <button class="item" data-act="quiz"><span class="num">🧭</span><span class="txt"><b>${S.profile?"Пройти тест заново":"Подобрать уроки под себя"}</b><span>5 вопросов</span></span>${I.chev}</button>
+    <button class="item" data-act="quiz"><span class="num">🧭</span><span class="txt"><b>${S.profile?"Пройти тест заново":"Подобрать уроки под себя"}</b><span>11 вопросов, 2-3 минуты</span></span>${I.chev}</button>
     <a class="item" href="${link(TOPICS.rules)}" target="_blank" rel="noopener"><span class="num">📌</span><span class="txt"><b>Правила клуба</b><span>Ветка «Начни здесь»</span></span>${I.chev}</a>
     <a class="item" href="https://t.me/profitrolik_club_bot" target="_blank" rel="noopener"><span class="num">🤖</span><span class="txt"><b>Подписка и поддержка</b><span>@profitrolik_club_bot</span></span>${I.chev}</a>
     <button class="item" data-act="reset"><span class="num">↺</span><span class="txt"><b>Сбросить прогресс</b><span>Отметки просмотра и трек</span></span></button>
@@ -479,28 +572,35 @@ function Me(){
 }
 
 function Quiz(){
-  const st=S.quiz; const q=QUIZ[st.i];
+  const st=S.quiz; const qs=qList(st.a); const q=qs[st.i];
+  const sel=q.multi?(st.a[q.k]||[]):null;
   return `<div class="quiz">
-    <div class="row between"><button class="back" data-act="qback">← ${st.i?"Назад":"Выйти"}</button><span class="muted nums">${st.i+1} из ${QUIZ.length}</span></div>
-    <div class="steps">${QUIZ.map((_,i)=>`<i class="${i<=st.i?"on":""}"></i>`).join("")}</div>
+    <div class="row between"><button class="back" data-act="qback">← ${st.i?"Назад":"Выйти"}</button><span class="muted nums">${st.i+1} из ${qs.length}</span></div>
+    <div class="steps">${qs.map((_,i)=>`<i class="${i<=st.i?"on":""}"></i>`).join("")}</div>
     <h1>${q.q}</h1>
-    <div class="opts">${q.o.map(([v,e,t])=>`<button class="opt" data-ans="${v}"><span class="em">${e}</span><span>${t}</span></button>`).join("")}</div>
+    ${q.hint?`<p class="muted" style="margin-top:-8px">${q.hint}</p>`:""}
+    <div class="opts">${q.o.map(([v,e,t])=>q.multi
+      ?`<button class="opt" data-multi="${v}" aria-pressed="${sel.includes(v)}"><span class="em">${e}</span><span>${t}</span><span class="tick">${sel.includes(v)?I.check:""}</span></button>`
+      :`<button class="opt" data-ans="${v}" aria-pressed="${st.a[q.k]===v}"><span class="em">${e}</span><span>${t}</span></button>`).join("")}</div>
+    ${q.multi?`<button class="btn primary block" data-act="qnext">${sel.length?"Дальше: выбрано "+sel.length:"Ничего из этого, дальше"}</button>`:""}
   </div>`;
 }
 
 function Result(){
-  const p=S.profile, lv=LEVELS[p.lvl];
-  const first=p.ids.slice(0,3).map(id=>byId[id]);
-  const cnt={};p.ids.forEach(id=>{const c=byId[id].c;cnt[c]=(cnt[c]||0)+1});
+  const p=S.profile, lv=LEVELS[p.lvl], t=trackState();
+  const prev=(S.history||[])[1];
+  const first=p.ids[0];
   return `<section class="hero">${DRIP}
     <div class="level" style="margin-top:18px"><div class="ring">${lv.icon}</div><div class="stack" style="gap:4px"><span class="eyebrow">Твой уровень</span><h1 style="margin:0">${lv.name}</h1></div></div>
-    <p>Собрали трек из <b class="nums">${p.ids.length}</b> уроков: фокус на ${p.focus}, цель: ${p.goal}.</p>
-    <div class="row" style="flex-wrap:wrap;gap:6px">${Object.entries(cnt).map(([c,n])=>`<span class="chip">${COURSES[c].icon} ${COURSES[c].title}: ${n}</span>`).join("")}</div>
+    ${p.diag?`<p>${p.diag}</p>`:""}
+    <p class="muted">Подобрали <b class="nums">${p.first}</b> приоритетных и <b class="nums">${p.ids.length-p.first}</b> дополнительных уроков из всей базы клуба. Цель: ${p.goal}.</p>
+    ${prev&&prev.top?`<p class="muted" style="font-size:13px">В прошлый раз (${fmtDate(prev.at)}) главными зонами были: ${prev.top.map(k=>AREAS[k]?AREAS[k].n.toLowerCase():k).join(", ")}.</p>`:""}
+    ${first?`<button class="btn primary block" data-lesson="${first}">Смотреть первый урок</button>`:""}
   </section>
-  <section class="section"><h2>Начни с этих</h2><div class="list">${first.map((l,i)=>itemLesson(l,{idx:i+1,course:1,now:i===0,locked:i>0})).join("")}</div>
-    <button class="btn primary block" data-lesson="${first[0].id}">Смотреть первый урок</button>
-    <button class="btn ghost block" data-act="track">Весь трек</button>
+  ${planBody(t)}
+  <section class="section">
     <a class="btn ghost block" href="${link(TOPICS[lv.chat])}" target="_blank" rel="noopener">Чат уровня «${LEVELS[lv.chat].name}»</a>
+    <p class="muted" style="font-size:12px;text-align:center">План сохранён во вкладке «Главная». Проходи тест раз в месяц: по мере роста подборка меняется.</p>
   </section>`;
 }
 
@@ -509,8 +609,9 @@ function Sheet(l){
   const t=trackState(); const inTrack=t&&t.ids.includes(l.id);
   return `<div class="scrim" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(l.t)}">
     <div class="grab"></div>
-    <div class="row" style="flex-wrap:wrap;gap:6px"><span class="chip">${c.icon} ${c.title}</span><span class="chip nums">Урок ${l.n}</span><span class="chip">${mins(l.m)}</span>${inTrack?'<span class="chip dough">В твоём треке</span>':""}</div>
+    <div class="row" style="flex-wrap:wrap;gap:6px"><span class="chip">${c.icon} ${c.title}</span><span class="chip nums">Урок ${l.n}</span><span class="chip">${mins(l.m)}</span>${inTrack?`<span class="chip dough">${S.profile.ids.indexOf(l.id)<(S.profile.first||0)?"Приоритет":"В твоём плане"}</span>`:""}</div>
     <h2 style="font-size:22px">${esc(l.t)}</h2>
+    ${inTrack&&S.profile.why&&S.profile.why[l.id]?`<div class="card" style="background:var(--surface-2);padding:12px 14px;gap:4px"><span class="eyebrow">Почему тебе</span><span>${S.profile.why[l.id]}</span></div>`:""}
     <p class="muted">${esc(l.a)}</p>
     ${l.tags.filter(x=>x!=="producer").length?`<div class="row" style="flex-wrap:wrap;gap:6px">${l.tags.filter(x=>x!=="producer").map(x=>`<span class="eyebrow">#${tagLabel(x)}</span>`).join("")}</div>`:""}
     <a class="btn primary block" href="${lessonLink(l)}" target="_blank" rel="noopener">▶ Смотреть в клубе</a>
@@ -539,7 +640,7 @@ function sheet(id){const l=byId[id];document.getElementById("layer").innerHTML=S
 function closeSheet(){document.getElementById("layer").innerHTML=""}
 
 document.addEventListener("click",e=>{
-  const el=e.target.closest("[data-tab],[data-act],[data-lesson],[data-course],[data-filter],[data-ans],[data-done]");
+  const el=e.target.closest("[data-tab],[data-act],[data-lesson],[data-course],[data-filter],[data-ans],[data-multi],[data-done]");
   if(!el) return;
   if(el.dataset.act==="close"&&e.target!==el) return;
   if(el.dataset.tab){S.tab=el.dataset.tab;S.course=null;S.quiz=null;closeSheet();render();return}
@@ -554,21 +655,23 @@ document.addEventListener("click",e=>{
     store.set("done",S.done);
     const t=trackState();
     closeSheet();render(true);
-    if(!was&&t&&t.ids.includes(id)){ toast(t.cur>=0?"Готово! Следующий урок трека открыт":"Трек пройден целиком 🎉") } else toast(was?"Отметка снята":"Отмечено");
+    if(!was&&t&&t.ids.includes(id)){ toast(t.cur>=0?"Готово! Следующий урок плана ждёт":"План пройден целиком 🎉") } else toast(was?"Отметка снята":"Отмечено");
     return}
-  if(el.dataset.ans){
-    const st=S.quiz; st.a[QUIZ[st.i].k]=el.dataset.ans;
-    if(st.i<QUIZ.length-1){st.i++;render()}
-    else{S.profile=buildTrack(st.a);store.set("profile",S.profile);S.quiz=null;S.tab="result";render()}
-    return}
+  const finishQuiz=()=>{const qa=S.quiz.a;S.profile=buildTrack(qa);
+    S.history=[{at:S.profile.at,lvl:S.profile.lvl,top:S.profile.areas.slice(0,3).map(x=>x[0])}].concat(S.history||[]).slice(0,12);
+    store.set("profile",S.profile);store.set("history",S.history);S.quiz=null;S.tab="result";render()};
+  const nextQ=()=>{const qs=qList(S.quiz.a); if(S.quiz.i<qs.length-1){S.quiz.i++;render()} else finishQuiz()};
+  if(el.dataset.ans){ const qs=qList(S.quiz.a); S.quiz.a[qs[S.quiz.i].k]=el.dataset.ans; nextQ(); return }
+  if(el.dataset.multi){ const qs=qList(S.quiz.a); const k=qs[S.quiz.i].k; const arr=S.quiz.a[k]||(S.quiz.a[k]=[]); const v=el.dataset.multi; const ix=arr.indexOf(v); if(ix>=0) arr.splice(ix,1); else arr.push(v); render(true); return }
   const a=el.dataset.act;
-  if(a==="quiz"){S.quiz={i:0,a:{}};closeSheet();render()}
+  if(a==="quiz"){S.quiz={i:0,a:{hard:[]}};closeSheet();render()}
   else if(a==="qback"){if(S.quiz.i)S.quiz.i--;else S.quiz=null;render()}
+  else if(a==="qnext"){nextQ()}
   else if(a==="track"){S.tab="track";render()}
   else if(a==="courses"){S.course=null;render()}
   else if(a==="close"){closeSheet()}
   else if(a==="reset"){
-    if(el.dataset.sure){S.done={};S.profile=null;store.set("done",{});store.set("profile",null);toast("Прогресс сброшен");render()}
+    if(el.dataset.sure){S.done={};S.profile=null;S.history=[];store.set("done",{});store.set("profile",null);store.set("history",[]);toast("Прогресс сброшен");render()}
     else{el.dataset.sure="1";el.querySelector(".txt b").textContent="Нажми ещё раз, чтобы сбросить";}
   }
 });
@@ -576,8 +679,9 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
 
 (async()=>{
   render();
-  const [d,p]=await Promise.all([store.get("done"),store.get("profile")]);
+  const [d,p,h]=await Promise.all([store.get("done"),store.get("profile"),store.get("history")]);
   if(d) S.done=d;
+  if(Array.isArray(h)) S.history=h;
   if(p) S.profile=p;
   render();
 })();
