@@ -236,7 +236,10 @@ const L=[
 {"c":"camera","n":32,"t":"Уверенный взгляд","a":"Как смотреть в камеру так, чтобы тебе доверяли.","m":null,"mid":97,"b":4,"tags":["camera"],"lvl":["t","p","r"]},
 {"c":"camera","n":33,"t":"Где брать идеи для роликов","a":"Как находить актуальные темы в своей нише.","m":null,"mid":98,"b":4,"tags":["camera","ideas"],"lvl":["t","p","r"]}
 ];
-const CLUB="4309233364";
+const CLUB="4428403046";
+const MAP={"22":4,"23":5,"24":6,"25":7,"26":8,"27":9,"28":10,"29":11,"30":12,"31":13,"32":14,"33":15,"34":16,"35":17,"36":18,"37":19,"38":20,"39":21,"40":22,"41":23,"42":24,"43":25,"44":26,"45":27,"46":28,"47":29,"48":30,"49":31,"50":66,"51":67,"52":68,"53":69,"54":70,"55":71,"56":72,"57":73,"58":74,"59":75,"60":76,"61":77,"62":78,"63":79,"64":80,"65":32,"66":33,"67":34,"68":35,"69":36,"70":37,"71":38,"72":39,"73":40,"74":41,"75":42,"76":43,"77":44,"78":45,"79":46,"80":47,"81":48,"82":49,"83":50,"84":51,"85":52,"86":53,"87":54,"88":55,"89":56,"90":57,"91":58,"92":59,"93":60,"94":61,"95":62,"96":63,"97":64,"98":65,"99":81,"100":82,"101":83};
+const CHATS={general:"4309233364",t:"4337275688",p:"4494387479",r:"3966146534",taste:"4296098520",wins:"3983102637"};
+const chat=k=>`https://t.me/c/${CHATS[k]}`;
 const COURSES={
   school:{id:"school",title:"Школа YouTube",topic:7,sub:"От идеи до канала, который растёт и продаёт",icon:"📚"},
   camera:{id:"camera",title:"Работа в кадре",topic:6,sub:"Уверенно говорить на камеру: голос, взгляд, подача",icon:"🎬"},
@@ -257,7 +260,10 @@ const tagLabel=t=>({ideas:"Идеи",views:"Просмотры",packaging:"Уп�
 
 L.forEach(l=>{l.id=l.c+"-"+l.n});
 const byId=Object.fromEntries(L.map(l=>[l.id,l]));
-const link=(topic,mid)=>`https://t.me/c/${CLUB}/${topic}${mid?"/"+mid:""}`;
+const FEED=`https://t.me/c/${CLUB}`;
+const post=old=>MAP[old]?`${FEED}/${MAP[old]}`:FEED;
+const link=(topic,mid)=>{ if(mid) return post(mid);
+  return ({1:chat("general"),2:FEED,3:post(99),4:FEED,5:post(50),6:post(65),7:post(22),8:FEED,9:chat("taste"),10:FEED,11:chat("r"),12:chat("p"),13:chat("t"),14:FEED+"/"+3})[topic]||FEED; };
 const lessonLink=l=>link(COURSES[l.c].topic,l.mid);
 const mins=n=>{if(n==null)return"короткий урок";const a=n%10,b=n%100;return n+" "+(a===1&&b!==11?"минута":a>=2&&a<=4&&(b<12||b>14)?"минуты":"минут")};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -466,6 +472,19 @@ function Tools(){
   <section class="section"><div class="card" style="background:var(--surface-2)"><span class="eyebrow">Готовится курс</span><h3>Автоматизация контента с ИИ</h3><p class="muted">Курс о том, как переложить на нейросети монтаж, сценарии и продюсирование. Появится в этой вкладке.</p></div></section>`;
 }
 
+function chatsBlock(lv){
+  const it=(href,icon,title,sub,mine)=>`<a class="item" href="${href}" target="_blank" rel="noopener"><span class="num">${icon}</span><span class="txt"><b>${title}</b><span>${sub}</span></span>${mine?'<span class="chip dough">Твой</span>':I.chev}</a>`;
+  const my=lv?lv.chat:null;
+  return `<section class="section"><h2>Клуб в Telegram</h2><div class="list">
+    ${it(FEED,"📚","Лента клуба","Уроки, эфиры, задания недели")}
+    ${it(chat("general"),"💬","Общий чат","Знакомство и общение участников")}
+    ${it(chat("t"),"🥟","Тесто","Каналы до 1&nbsp;000 подписчиков",my==="t")}
+    ${it(chat("p"),"🔥","На подъёме","От 1&nbsp;000 до 10&nbsp;000",my==="p")}
+    ${it(chat("r"),"👑","Профитроль","От 10&nbsp;000 и доход",my==="r")}
+    ${it(chat("taste"),"🍰","Дегустация","Присылай ролики на разбор")}
+    ${it(chat("wins"),"🏆","Итоги и победы","Делимся результатами")}
+  </div></section>`;
+}
 function Home(){
   const t=trackState();
   let hero;
@@ -492,17 +511,13 @@ function Home(){
   }
   const lv=S.profile?LEVELS[S.profile.lvl]:null;
   return `${hero}
+  ${chatsBlock(lv)}
   <section class="section"><div class="row between"><h2>Ближайший эфир</h2><button class="muted" data-tab="live">Все</button></div>
     <div class="card event"><div class="date"><b>29</b><span>окт</span></div>
       <div class="stack" style="gap:4px;min-width:0"><h3>Открытый эфир клуба</h3><p class="muted">19:00 по Москве · разборы каналов в прямом эфире</p></div></div>
   </section>
   <section class="section"><h2>Курсы</h2><div class="courses">${Object.values(COURSES).map(courseCard).join("")}</div></section>
-  <section class="section"><h2>В клубе</h2><div class="links">
-    <a class="link" href="${link(TOPICS.tasting)}" target="_blank" rel="noopener"><b>🍰 Дегустация</b><span>Разборы твоих роликов</span></a>
-    <a class="link" href="${link(TOPICS.recipe)}" target="_blank" rel="noopener"><b>📅 Рецепт недели</b><span>Задание недели</span></a>
-    <a class="link" href="${link(lv?TOPICS[lv.chat]:TOPICS.general)}" target="_blank" rel="noopener"><b>${lv?lv.icon+" Чат «"+lv.name+"»":"💬 Общий чат"}</b><span>${lv?"Люди твоего уровня":"Вопросы и общение"}</span></a>
-    <a class="link" href="${link(TOPICS.rules)}" target="_blank" rel="noopener"><b>📌 Начни здесь</b><span>Правила и навигация</span></a>
-  </div></section>`;
+  `;
 }
 
 function Track(){
@@ -525,7 +540,7 @@ function Courses(){
     return `<button class="back" data-act="courses">← Все курсы</button>
     <section class="stack"><span class="eyebrow">${c.icon} ${ls.length} уроков</span><h1>${esc(c.title)}</h1><p class="muted">${esc(c.sub)}</p>
       <div class="row"><div class="bar" style="flex:1"><i style="width:${dn/ls.length*100}%"></i></div><span class="nums muted">${dn} / ${ls.length}</span></div>
-      <a class="btn ghost" href="${link(c.topic)}" target="_blank" rel="noopener">Открыть ветку курса в клубе</a></section>
+      <a class="btn ghost" href="${link(c.topic)}" target="_blank" rel="noopener">Открыть курс в ленте клуба</a></section>
     <div class="list" style="margin-top:18px">${ls.map(l=>itemLesson(l)).join("")}</div>`;
   }
   const q=S.q.trim().toLowerCase();
@@ -540,14 +555,14 @@ function Courses(){
 }
 
 function Live(){
-  return `<section class="stack"><h1>Эфиры</h1><p class="muted">Эфиры клуба проходят в Telegram. Записи появляются в ветке «Записи эфиров и вебинаров».</p></section>
+  return `<section class="stack"><h1>Эфиры</h1><p class="muted">Эфиры клуба проходят в Telegram. Анонсы и записи публикуются в ленте клуба.</p></section>
   <section class="section"><span class="eyebrow">Скоро</span>
     <div class="card event"><div class="date"><b>29</b><span>окт</span></div>
       <div class="stack" style="gap:4px;min-width:0"><h3>Открытый эфир клуба</h3><p class="muted">Четверг, 19:00 МСК. Разборы каналов, ответы на вопросы.</p></div></div>
   </section>
   <section class="section"><span class="eyebrow">Записи</span>
     <div class="empty">Первая запись появится после эфира 29 октября.</div>
-    <a class="btn ghost block" href="${link(TOPICS.streams)}" target="_blank" rel="noopener">Открыть ветку с записями</a>
+    <a class="btn ghost block" href="${link(TOPICS.streams)}" target="_blank" rel="noopener">Открыть ленту клуба</a>
   </section>
   <section class="section"><span class="eyebrow">Регулярно в клубе</span>
     <div class="list">
@@ -590,7 +605,7 @@ function Me(){
   ${(S.history||[]).length?`<section class="section"><h2>История тестов</h2><div class="list">${S.history.slice(0,5).map(h=>`<div class="item"><span class="num">${LEVELS[h.lvl]?LEVELS[h.lvl].icon:"🥐"}</span><span class="txt"><b>${fmtDate(h.at)} · ${LEVELS[h.lvl]?LEVELS[h.lvl].name:""}</b><span>${(h.top||[]).map(k=>AREAS[k]?AREAS[k].n:k).join(", ")}</span></span></div>`).join("")}</div></section>`:""}
   <section class="section"><h2>Настройки</h2><div class="list">
     <button class="item" data-act="quiz"><span class="num">🧭</span><span class="txt"><b>${S.profile?"Пройти тест заново":"Подобрать уроки под себя"}</b><span>11 вопросов, 2-3 минуты</span></span>${I.chev}</button>
-    <a class="item" href="${link(TOPICS.rules)}" target="_blank" rel="noopener"><span class="num">📌</span><span class="txt"><b>Правила клуба</b><span>Ветка «Начни здесь»</span></span>${I.chev}</a>
+    <a class="item" href="${link(TOPICS.rules)}" target="_blank" rel="noopener"><span class="num">📌</span><span class="txt"><b>Правила клуба</b><span>Закреп в ленте клуба</span></span>${I.chev}</a>
     <a class="item" href="https://t.me/profitrolik_club_bot" target="_blank" rel="noopener"><span class="num">🤖</span><span class="txt"><b>Подписка и поддержка</b><span>@profitrolik_club_bot</span></span>${I.chev}</a>
     <button class="item" data-act="reset"><span class="num">↺</span><span class="txt"><b>Сбросить прогресс</b><span>Отметки просмотра и трек</span></span></button>
   </div></section>`;
