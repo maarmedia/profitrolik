@@ -405,7 +405,7 @@ function trackState(){
   return {ids,cur,total:ids.length,done:doneCount(ids)};
 }
 function toast(t){const el=document.createElement("div");el.className="toast";el.textContent=t;el.setAttribute("role","status");document.body.appendChild(el);setTimeout(()=>el.remove(),1800)}
-function openLink(url){ if(TG&&url.startsWith("https://t.me/")){try{TG.openTelegramLink(url);return true}catch(e){}} return false }
+function openLink(url){ if(TG&&url.startsWith("https://t.me/")){try{TG.openTelegramLink(url);setTimeout(()=>{try{TG.close()}catch(e){}},400);return true}catch(e){}} return false }
 document.addEventListener("click",e=>{const a=e.target.closest("a[href^='https://t.me/']");if(a&&openLink(a.href))e.preventDefault()});
 
 const I={
