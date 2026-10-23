@@ -51,6 +51,7 @@ p{margin:0}
 .top{display:flex;align-items:center;gap:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:6px 10px}
 .top img{width:40px;height:40px;border-radius:12px;flex:none}
 .top .who{min-width:0;flex:1}
+.top .who .eyebrow{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top .who b{display:block;font-family:var(--display);font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--fg);white-space:nowrap}
 .chip.glaze{background:var(--glaze);color:#fff}
@@ -127,6 +128,9 @@ a.item{text-decoration:none;color:inherit}
 .zones{display:flex;flex-direction:column;gap:9px}
 .zone{display:grid;grid-template-columns:minmax(0,1fr) 46%;gap:10px;align-items:center;font-size:13px;font-weight:600}
 .zone .bar i{background:var(--glaze)}
+.prompt{position:relative;background:var(--surface-2);border-radius:14px;padding:14px;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace}
+.soon{opacity:.75}
+.tabs nav{grid-template-columns:repeat(6,1fr)!important}
 
 /* result */
 .level{display:flex;align-items:center;gap:14px}
@@ -135,7 +139,7 @@ a.item{text-decoration:none;color:inherit}
 /* tab bar */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:rgba(17,17,16,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px max(8px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
 .tabs nav{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
-.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11px;font-weight:700;color:var(--muted)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:10.5px;min-width:0;font-weight:700;color:var(--muted)}
 .tab svg{width:22px;height:22px}
 .tab[aria-current="page"]{color:var(--fg)}
 .tab[aria-current="page"] svg{color:var(--glaze)}
@@ -403,6 +407,7 @@ const I={
   courses:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>',
   live:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4"/></svg>',
   mat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>',
+  ai:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg>',
   me:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
   chev:'<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
   lock:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>',
@@ -439,6 +444,26 @@ function courseCard(c){
     <div class="bar"><i style="width:${tot?dn/tot*100:0}%"></i></div>
     <div class="meta"><span class="eyebrow">${tot} уроков${m?" · "+Math.round(m/60)+" ч видео":""}</span></div>
   </button>`;
+}
+
+const TOOLS=[
+  {id:"editor",i:"✂️",t:"Автомонтажёр",s:"Навык Claude: черновой монтаж ролика по исходникам и сценарию",status:"soon",
+   about:"ИИ-помощник, который берёт на себя рутину монтажа: нарезку дублей, паузы, субтитры и черновую сборку. Ты загружаешь исходники и сценарий, на выходе черновик ролика, который остаётся довести.",
+   steps:["Скопируй промпт ниже.","Открой Claude и создай новый проект или навык.","Вставь промпт в инструкции и загрузи свои исходники.","Сверь результат с чек-листом монтажа из урока 12 «Школы YouTube»."],prompts:[]},
+  {id:"writer",i:"📝",t:"ИИ-сценарист",s:"Сценарий ролика по структуре из уроков: хук, блоки, мостики, призыв",status:"soon",about:"Помогает собрать сценарий по структуре клуба и проверить его по чек-листу идеального сценария.",steps:[],prompts:[]},
+  {id:"clone",i:"🧠",t:"Продюсер-клон",s:"Как настроить ИИ-клона продюсера, который думает твоими методами",status:"soon",about:"Настройка ИИ-помощника, который разбирает темы, названия и обложки так, как это делает продюсер.",steps:[],prompts:[]}
+];
+function Tools(){
+  if(S.tool){const x=TOOLS.find(t=>t.id===S.tool);
+    return `<button class="back" data-act="tools">← Все инструменты</button>
+    <section class="stack"><span class="eyebrow">${x.i} Автоматизация с ИИ</span><h1>${x.t}</h1><p>${x.about}</p>
+      ${x.status==="soon"?`<span class="chip dough" style="align-self:flex-start">Скоро в клубе</span>`:""}</section>
+    ${x.steps.length?`<section class="section"><h2>Как подключить</h2><div class="list">${x.steps.map((s,i)=>`<div class="item"><span class="num">${i+1}</span><span class="txt"><b style="font-weight:600">${s}</b></span></div>`).join("")}</div></section>`:""}
+    ${x.prompts.length?x.prompts.map((p,k)=>`<section class="section"><div class="row between"><h2>${p.t}</h2><button class="btn ghost" style="min-height:38px;padding:0 14px" data-copy="${x.id}:${k}">Скопировать</button></div><div class="prompt" id="pr-${x.id}-${k}">${esc(p.text)}</div></section>`).join("")
+      :`<section class="section"><div class="empty">Промпт появится здесь, как только Стас его опубликует. Новые инструменты и обновления тоже будут в этой вкладке.</div></section>`}`;}
+  return `<section class="stack"><h1>Автоматизация с ИИ</h1><p class="muted">Готовые промпты и навыки, которые снимают с тебя рутину: монтаж, сценарии, разбор тем. Скопировал, вставил в нейросеть, работаешь.</p></section>
+  <section class="section"><div class="list">${TOOLS.map(x=>`<button class="item${x.status==="soon"?" soon":""}" data-tool="${x.id}"><span class="num">${x.i}</span><span class="txt"><b>${x.t}</b><span>${x.s}</span></span>${x.status==="soon"?'<span class="chip">Скоро</span>':I.chev}</button>`).join("")}</div></section>
+  <section class="section"><div class="card" style="background:var(--surface-2)"><span class="eyebrow">Готовится курс</span><h3>Автоматизация контента с ИИ</h3><p class="muted">Курс о том, как переложить на нейросети монтаж, сценарии и продюсирование. Появится в этой вкладке.</p></div></section>`;
 }
 
 function Home(){
@@ -620,7 +645,7 @@ function Sheet(l){
 }
 
 /* ---------- render ---------- */
-const TABS=[["home","Главная",I.home],["courses","Курсы",I.courses],["live","Эфиры",I.live],["mat","Материалы",I.mat],["me","Профиль",I.me]];
+const TABS=[["home","Главная",I.home],["courses","Курсы",I.courses],["tools","ИИ",I.ai],["live","Эфиры",I.live],["mat","Материалы",I.mat],["me","Профиль",I.me]];
 function render(keepScroll){
   const app=document.getElementById("app");
   const top=`<header class="top"><img src="${LOGO}" alt="Профитролик"><div class="who"><span class="eyebrow">Профитролик · клуб</span><b>Привет, ${esc(S.name)}</b></div><span class="chip glaze">Первопроходец</span></header>`;
@@ -628,7 +653,7 @@ function render(keepScroll){
   if(S.quiz) body=Quiz();
   else if(S.tab==="result") body=Result();
   else if(S.tab==="track") body=Track();
-  else body={home:Home,courses:Courses,live:Live,mat:Mat,me:Me}[S.tab]();
+  else body={home:Home,courses:Courses,tools:Tools,live:Live,mat:Mat,me:Me}[S.tab]();
   app.innerHTML=(S.quiz?"":top)+body;
   const cur=S.tab==="track"||S.tab==="result"?"home":S.tab;
   document.getElementById("tabs").innerHTML=TABS.map(([k,v,ic])=>`<button class="tab" data-tab="${k}"${cur===k&&!S.quiz?' aria-current="page"':""}>${ic}<span>${v}</span></button>`).join("");
@@ -640,10 +665,15 @@ function sheet(id){const l=byId[id];document.getElementById("layer").innerHTML=S
 function closeSheet(){document.getElementById("layer").innerHTML=""}
 
 document.addEventListener("click",e=>{
-  const el=e.target.closest("[data-tab],[data-act],[data-lesson],[data-course],[data-filter],[data-ans],[data-multi],[data-done]");
+  const el=e.target.closest("[data-tab],[data-act],[data-lesson],[data-course],[data-filter],[data-ans],[data-multi],[data-done],[data-tool],[data-copy]");
   if(!el) return;
   if(el.dataset.act==="close"&&e.target!==el) return;
-  if(el.dataset.tab){S.tab=el.dataset.tab;S.course=null;S.quiz=null;closeSheet();render();return}
+  if(el.dataset.tab){S.tab=el.dataset.tab;S.course=null;S.tool=null;S.quiz=null;closeSheet();render();return}
+  if(el.dataset.tool){S.tab="tools";S.tool=el.dataset.tool;render();return}
+  if(el.dataset.copy){const [id,k]=el.dataset.copy.split(":");const x=TOOLS.find(t=>t.id===id);const txt=x.prompts[+k].text;
+    const done=()=>{el.textContent="Скопировано";setTimeout(()=>el.textContent="Скопировать",1500)};
+    try{navigator.clipboard.writeText(txt).then(done,()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("pr-"+id+"-"+k));const s=getSelection();s.removeAllRanges();s.addRange(r);toast("Текст выделен: нажми «Копировать»")})}catch(e){}
+    return}
   if(el.dataset.course){S.tab="courses";S.course=el.dataset.course;render();return}
   if(el.dataset.filter){S.filter=el.dataset.filter;render(true);return}
   if(el.dataset.lesson){
@@ -669,6 +699,7 @@ document.addEventListener("click",e=>{
   else if(a==="qnext"){nextQ()}
   else if(a==="track"){S.tab="track";render()}
   else if(a==="courses"){S.course=null;render()}
+  else if(a==="tools"){S.tool=null;render()}
   else if(a==="close"){closeSheet()}
   else if(a==="reset"){
     if(el.dataset.sure){S.done={};S.profile=null;S.history=[];store.set("done",{});store.set("profile",null);store.set("history",[]);toast("Прогресс сброшен");render()}
