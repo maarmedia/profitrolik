@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Профитролик: приложение клуба</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: phone-first app shell. Header, scrolling screen, fixed bottom tab bar. Single dark brand look (the logo's black), glaze red as the one accent, dough gold for progress. */
+:root{
+  --bg:#111110;
+  --surface:#1B1A18;
+  --surface-2:#24221F;
+  --line:#33302B;
+  --fg:#F7F4EF;
+  --muted:#A39C92;
+  --glaze:#E5323B;
+  --glaze-deep:#B8212A;
+  --dough:#E9A863;
+  --ok:#6FCF8E;
+  --display:"Rubik","Arial Black",system-ui,sans-serif;
+  --body:"Manrope","Segoe UI",system-ui,sans-serif;
+  --r:16px;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--dough);outline-offset:2px;border-radius:8px}
+.app{max-width:520px;margin:0 auto;min-height:100%;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px calc(92px + env(safe-area-inset-bottom,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:26px;font-weight:800;line-height:1.1}
+h2{font-size:19px;font-weight:700}
+h3{font-size:16px;font-weight:700;line-height:1.25}
+p{margin:0}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.section{display:flex;flex-direction:column;gap:12px;margin-top:26px}
+.row{display:flex;align-items:center;gap:12px}
+.between{justify-content:space-between}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:6px 10px}
+.top img{width:40px;height:40px;border-radius:12px;flex:none}
+.top .who{min-width:0;flex:1}
+.top .who b{display:block;font-family:var(--display);font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--fg);white-space:nowrap}
+.chip.glaze{background:var(--glaze);color:#fff}
+.chip.dough{background:rgba(233,168,99,.16);color:var(--dough)}
+
+/* hero: the glaze drip */
+.hero{position:relative;overflow:hidden;border-radius:22px;background:var(--surface);padding:22px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.hero .drip{position:absolute;inset:0 0 auto 0;height:34px;color:var(--glaze)}
+.hero .drip svg{display:block;width:100%;height:34px}
+.hero > *:not(.drip){position:relative}
+.hero h1{margin-top:22px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:14px;font-family:var(--display);font-weight:700;font-size:15px;text-decoration:none}
+.btn.primary{background:var(--glaze);color:#fff}
+.btn.primary:active{background:var(--glaze-deep)}
+.btn.ghost{background:var(--surface-2);color:var(--fg)}
+.btn.block{width:100%}
+
+/* progress */
+.bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--dough);border-radius:99px;transition:width .4s ease}
+.nums{font-variant-numeric:tabular-nums}
+
+/* cards & lists */
+.card{background:var(--surface);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
+.list{display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r);overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;padding:13px 14px;text-align:left;width:100%;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.item .txt b{font-weight:700;font-size:15px;line-height:1.3}
+.item .txt span{font-size:13px;color:var(--muted)}
+.num{flex:none;width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.num.done{background:rgba(111,207,142,.15);color:var(--ok)}
+.num.now{background:var(--glaze);color:#fff}
+.num.lock{color:var(--muted)}
+.item.locked .txt b{color:var(--muted)}
+.chev{flex:none;color:var(--muted)}
+
+.courses{display:grid;grid-template-columns:1fr;gap:10px}
+.course{display:flex;flex-direction:column;gap:10px;text-align:left;background:var(--surface);border-radius:var(--r);padding:16px;width:100%}
+.course .meta{display:flex;gap:8px;flex-wrap:wrap}
+.course h3{font-size:17px}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.fchip{flex:none;padding:8px 13px;border-radius:999px;background:var(--surface);font-size:13px;font-weight:700;border:1px solid var(--line)}
+.fchip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.search{width:100%;min-height:46px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:0 14px;font:inherit}
+.search::placeholder{color:var(--muted)}
+
+.card.event{flex-direction:row;gap:14px;align-items:center}
+.date{flex:none;width:58px;border-radius:14px;background:var(--glaze);color:#fff;text-align:center;padding:8px 0}
+.date b{display:block;font-family:var(--display);font-size:24px;font-weight:800;line-height:1}
+.date span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+
+.links{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.link{background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:4px;text-decoration:none;min-width:0}
+.link b{font-family:var(--display);font-size:14px;font-weight:700}
+.link span{font-size:12px;color:var(--muted)}
+
+/* quiz */
+.quiz{display:flex;flex-direction:column;gap:18px;padding-top:8px}
+.steps{display:flex;gap:6px}
+.steps i{flex:1;height:5px;border-radius:9px;background:var(--surface-2)}
+.steps i.on{background:var(--glaze)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px;font-weight:600}
+.opt:hover{border-color:var(--muted)}
+.opt .em{flex:none;width:30px;text-align:center;font-size:20px}
+
+/* result */
+.level{display:flex;align-items:center;gap:14px}
+.level .ring{flex:none;width:64px;height:64px;border-radius:20px;background:var(--surface-2);display:grid;place-items:center;font-size:32px}
+
+/* tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:rgba(17,17,16,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px max(8px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+.tabs nav{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11px;font-weight:700;color:var(--muted)}
+.tab svg{width:22px;height:22px}
+.tab[aria-current="page"]{color:var(--fg)}
+.tab[aria-current="page"] svg{color:var(--glaze)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:520px;background:var(--surface);border-radius:22px 22px 0 0;padding:10px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px;max-height:88%;overflow-y:auto;animation:up .22s ease}
+.grab{width:40px;height:4px;border-radius:9px;background:var(--line);margin:0 auto 4px}
+@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--fg);color:var(--bg);font-weight:700;padding:10px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px)}
+.back{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--muted);padding:6px 0}
+.empty{border:1.5px dashed var(--line);border-radius:var(--r);padding:18px;text-align:center;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="tabs"><nav id="tabs" aria-label="Разделы"></nav></div>
+<div id="layer"></div>
+
+<script>
+const LOGO="logo.jpg";
+const L=[
+{"c":"school","n":1,"t":"Как развиваются каналы с нуля","a":"Сколько времени до первых просмотров и подписчиков, как оформить канал как витрину, план первых 4-6 роликов и что делать с первыми зрителями.","m":32,"mid":23,"tags":["start","packaging","plan"],"lvl":["t"]},
+{"c":"school","n":2,"t":"Как работают алгоритмы YouTube","a":"Где работают рекомендации, три фактора роста (CTR, удержание, возвращаемость) и как YouTube тестирует ролик на разных кругах зрителей.","m":21,"mid":24,"tags":["algo","views"],"lvl":["t","p"]},
+{"c":"school","n":3,"t":"Анализ конкурентов","a":"Как найти прямых и смежных конкурентов, разобрать их лучшие ролики и подтвердить темы через поиск и похожие видео.","m":24,"mid":25,"tags":["ideas","competitors"],"lvl":["t","p"]},
+{"c":"school","n":4,"t":"Темы, на которые хочется нажать, и контент-план","a":"Как искать идеи через конкурентов, считать коэффициент вирусности и собрать план из охватных, экспертных и продающих роликов.","m":25,"mid":27,"tags":["ideas","plan","views"],"lvl":["t","p"]},
+{"c":"school","n":5,"t":"Названия, которые хочется открыть","a":"Открытая петля интереса, эмоции в заголовке и чем названия под поиск отличаются от названий под рекомендации.","m":18,"mid":28,"tags":["packaging","ctr"],"lvl":["t","p"]},
+{"c":"school","n":6,"t":"Сценарий, который досматривают до конца","a":"Хук из трёх частей, схемы раскрытия блоков, мостики между ними и как убрать воду, чтобы держать темп.","m":20,"mid":29,"tags":["script","retention"],"lvl":["t","p","r"]},
+{"c":"school","n":7,"t":"Как выбрать оборудование","a":"Когда хватит смартфона, когда нужна камера и как сделать «дорогую» картинку за счёт света, композиции и глубины кадра.","m":6,"mid":32,"tags":["gear"],"lvl":["t"]},
+{"c":"school","n":8,"t":"Микрофон и чистый звук","a":"Почему звук важнее картинки, какой микрофон выбрать под формат съёмки и как подтянуть звук нейросетями.","m":6,"mid":33,"tags":["gear"],"lvl":["t"]},
+{"c":"school","n":9,"t":"Свет: мягкий и «дорогой» кадр","a":"Естественный свет у окна, контроль экспозиции, схема с софтбоксом, декоративный и контровой свет.","m":25,"mid":34,"tags":["gear"],"lvl":["t","p"]},
+{"c":"school","n":10,"t":"CapCut: собираем первый ролик","a":"Синхронизация внешнего звука, чистая нарезка горячими клавишами, динамика через зумы, текст и фоновые звуки.","m":41,"mid":35,"tags":["editing"],"lvl":["t"]},
+{"c":"school","n":11,"t":"Кликабельные обложки и названия","a":"Формула обложки, эмоциональный триггер, первые 5-8 слов названия и понятное ТЗ дизайнеру.","m":32,"mid":36,"tags":["packaging","ctr"],"lvl":["t","p","r"]},
+{"c":"school","n":12,"t":"Стиль монтажа под нишу и аудиторию","a":"Как по конкурентам выбрать темп монтажа, чек-лист первых 30 секунд и ТЗ монтажёру.","m":18,"mid":37,"tags":["editing","retention"],"lvl":["p","r"]},
+{"c":"school","n":13,"t":"Превью в Photoshop","a":"Как вырезать ведущего, собрать чистую композицию и сделать текст на обложке читаемым за секунду.","m":29,"mid":38,"tags":["packaging"],"lvl":["t","p"]},
+{"c":"school","n":14,"t":"Длинные видео и Shorts: как сочетать","a":"Когда нужны длинные ролики, когда Shorts, безопасный порядок запуска и какие метрики смотреть.","m":12,"mid":39,"tags":["strategy","shorts"],"lvl":["t","p"]},
+{"c":"school","n":15,"t":"Ведущий в кадре: взгляд, голос, мимика, жесты","a":"Как снять зажим, держать контакт с камерой и не звучать монотонно.","m":16,"mid":40,"tags":["camera"],"lvl":["t","p"]},
+{"c":"school","n":16,"t":"Подача конкурентов: где ты можешь быть сильнее","a":"Как разобрать работу в кадре у других ведущих и найти темы, где ты выиграешь живостью и уверенностью.","m":4,"mid":41,"tags":["camera","competitors"],"lvl":["p"]},
+{"c":"school","n":17,"t":"SEO: чтобы YouTube правильно понял ролик","a":"Подготовка файла, описание с ключевыми словами, теги, субтитры и тайм-коды.","m":44,"mid":42,"tags":["seo","views"],"lvl":["t","p"]},
+{"c":"school","n":18,"t":"Аналитика: что реально работает","a":"Главные показатели YouTube Studio, удержание и CTR, и как понять, почему ролик «сдулся».","m":43,"mid":43,"tags":["analytics","views"],"lvl":["p","r"]},
+{"c":"school","n":19,"t":"Речь, интонация и дыхание","a":"Техники дикции, интонационные «этажи» и «вопрос-ответ», упражнения против зажимов.","m":14,"mid":44,"tags":["camera"],"lvl":["t","p"]},
+{"c":"school","n":20,"t":"Целевая аудитория и канал под продажи","a":"Канал вокруг продукта, портрет зрителя и темы, которые продают даже с маленького канала.","m":17,"mid":45,"tags":["sales","audience"],"lvl":["t","p","r"]},
+{"c":"school","n":21,"t":"УТП для YouTube-канала","a":"Как из болей клиента собрать сильное предложение и встроить его в ролик так, чтобы оно продавало.","m":9,"mid":46,"tags":["sales"],"lvl":["p","r"]},
+{"c":"school","n":22,"t":"Воронка продаж с YouTube","a":"Правило «30 минут», одношаговая и двухшаговая воронка, нативные интеграции, описание и закреп.","m":14,"mid":47,"tags":["sales","funnel"],"lvl":["p","r"]},
+{"c":"school","n":23,"t":"Лайфхаки продвижения","a":"Как переводить зрителей в Telegram, конечные заставки и подсказки, постоянные зрители и чего делать нельзя.","m":13,"mid":48,"tags":["views","funnel"],"lvl":["p","r"]},
+{"c":"school","n":24,"t":"Триггеры и вирусные ролики","a":"Как находить у конкурентов ролики с аномальными просмотрами и вытаскивать из них работающие триггеры.","m":18,"mid":49,"tags":["ideas","views"],"lvl":["p","r"]},
+{"c":"producer","n":1,"t":"Как искать клиентов","a":"Каких клиентов искать, оффер, который продаёт, и поиск через Авито и YouTube.","m":34,"mid":51,"tags":["producer","clients"],"lvl":["prod"]},
+{"c":"producer","n":2,"t":"Все каналы поиска клиентов","a":"Упаковка, кейсы и самопрезентация, точечные рассылки и каналы: Telegram, YouTube, Авито, HH.","m":15,"mid":52,"tags":["producer","clients"],"lvl":["prod"]},
+{"c":"producer","n":3,"t":"Первый звонок с клиентом","a":"Подготовка, структура звонка и частые ошибки на первом созвоне.","m":14,"mid":53,"tags":["producer","sales"],"lvl":["prod"]},
+{"c":"producer","n":4,"t":"Продающий звонок","a":"Как вести диалог, презентовать услуги, назвать цену и отвечать на возражения.","m":14,"mid":54,"tags":["producer","sales"],"lvl":["prod"]},
+{"c":"producer","n":5,"t":"Работа с заказчиком и бриф","a":"Первый созвон, вопросы брифа и как управлять ожиданиями клиента.","m":7,"mid":55,"tags":["producer","client_work"],"lvl":["prod"]},
+{"c":"producer","n":6,"t":"Аудит канала клиента","a":"Поверхностный и глубокий аудит, частые проблемы каналов и как показать их через аналитику.","m":17,"mid":56,"tags":["producer","client_work","analytics"],"lvl":["prod"]},
+{"c":"producer","n":7,"t":"Стратегия канала клиента","a":"Цели и прогнозы без завышенных ожиданий, три типа роликов и пропорции под нишу.","m":7,"mid":57,"tags":["producer","strategy"],"lvl":["prod"]},
+{"c":"producer","n":8,"t":"Как учиться и получать результат","a":"Почему практика важнее уроков и как пройти полный цикл от анализа до публикации.","m":8,"mid":58,"tags":["producer"],"lvl":["prod"]},
+{"c":"producer","n":9,"t":"Полный цикл работы с клиентом","a":"От брифа и выбора тем до сценария, съёмки, монтажа и публикации.","m":15,"mid":59,"tags":["producer","client_work"],"lvl":["prod"]},
+{"c":"producer","n":10,"t":"С каких услуг начать","a":"Что продавать новичку, как поставить первые цены и где взять первых клиентов.","m":6,"mid":60,"tags":["producer","clients"],"lvl":["prod"]},
+{"c":"producer","n":11,"t":"Своё YouTube-агентство","a":"Что делегировать первым, как собрать команду на 10+ клиентов и считать маржу.","m":11,"mid":61,"tags":["producer","team"],"lvl":["prod"]},
+{"c":"producer","n":12,"t":"Цикл производства и сроки","a":"Дорожная карта, этапы продакшена и как честно называть клиенту сроки.","m":4,"mid":62,"tags":["producer","team"],"lvl":["prod"]},
+{"c":"producer","n":13,"t":"Как нанимать команду","a":"Где искать монтажёров и дизайнеров, как отбирать и тестировать исполнителей.","m":6,"mid":63,"tags":["producer","team"],"lvl":["prod"]},
+{"c":"producer","n":14,"t":"Делегирование без потери качества","a":"Как перестать тянуть всё на себе и собрать команду, которая держит качество.","m":5,"mid":64,"tags":["producer","team"],"lvl":["prod"]},
+{"c":"camera","n":1,"t":"Страх первой съёмки","a":"Как перестать бояться камеры и записать первое видео о себе.","m":null,"mid":66,"b":1,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":2,"t":"Куда смотреть: правило чёрной точки","a":"Как держать взгляд в объективе, чтобы зритель чувствовал контакт.","m":null,"mid":67,"b":1,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":3,"t":"Признание: честность снимает хейт","a":"Почему открыто сказать о своих слабых местах сильнее, чем прятать их.","m":null,"mid":68,"b":1,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":4,"t":"Принятие себя в кадре","a":"Как спокойно относиться к своей внешности, голосу и недостаткам на видео.","m":null,"mid":69,"b":1,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":5,"t":"Самоирония","a":"Как смеяться над собой и становиться от этого ближе зрителю.","m":null,"mid":70,"b":1,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":6,"t":"Дикция","a":"Четыре техники, чтобы говорить чётко с первого дубля.","m":null,"mid":71,"b":2,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":7,"t":"Интонация","a":"Упражнения «Этажи» и «Вопрос-ответ», чтобы речь не звучала монотонно.","m":null,"mid":72,"b":2,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":8,"t":"Скорость речи","a":"Когда замедляться, когда ускоряться и как выделять главное темпом.","m":null,"mid":73,"b":2,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":9,"t":"Громкость голоса","a":"Как менять громкость, чтобы держать внимание и подчёркивать важное.","m":null,"mid":74,"b":2,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":10,"t":"Улыбка в кадре","a":"Как улыбаться искренне, а не натянуто, и зачем это зрителю.","m":null,"mid":75,"b":2,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":11,"t":"Слова-паразиты","a":"Как заметить и убрать «ну», «как бы» и «типа» из речи.","m":null,"mid":76,"b":2,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":12,"t":"Зажимы","a":"Упражнения «Волна» и «Цветок», чтобы тело в кадре стало свободным.","m":null,"mid":77,"b":2,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":13,"t":"Разминка перед съёмкой","a":"Короткая разминка речевого аппарата, которая экономит дубли.","m":null,"mid":78,"b":2,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":14,"t":"Дыхание","a":"Как говорить фразами на одном вдохе и не задыхаться в кадре.","m":null,"mid":79,"b":2,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":15,"t":"Эмоциональность","a":"Как передавать эмоции голосом и лицом, чтобы ролик цеплял.","m":null,"mid":80,"b":3,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":16,"t":"Мимика","a":"Как оживить лицо в кадре и не перегнуть палку.","m":null,"mid":81,"b":3,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":17,"t":"Жесты","a":"Что делать руками в кадре и каких жестов избегать.","m":null,"mid":82,"b":3,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":18,"t":"Говорящая голова без скуки","a":"Как менять ракурс и план, чтобы монолог в кадре смотрели.","m":null,"mid":83,"b":3,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":19,"t":"Приёмы ведущего","a":"Как говорить с одного дубля и не теряться при ошибке.","m":null,"mid":84,"b":3,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":20,"t":"Съёмка на людях","a":"Как перестать стесняться и снимать в публичных местах.","m":null,"mid":85,"b":3,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":21,"t":"Положение ведущего в кадре","a":"Где стоять, как сидеть и куда ставить камеру.","m":null,"mid":86,"b":3,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":22,"t":"Роли ведущего","a":"Какие роли ты можешь играть в кадре и как выбрать свою.","m":null,"mid":87,"b":4,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":23,"t":"Мини-сценарий: завязка, кульминация, развязка","a":"Как рассказать короткую историю, которую дослушают.","m":null,"mid":88,"b":4,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":24,"t":"Композиция кадра","a":"Как собрать фон и предметы в кадре, чтобы картинка выглядела продуманной.","m":null,"mid":89,"b":4,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":25,"t":"Как запомнить текст","a":"Приёмы, чтобы говорить своими словами без суфлёра.","m":null,"mid":90,"b":4,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":26,"t":"Импровизация","a":"Как быстро и интересно говорить на любую тему без подготовки.","m":null,"mid":91,"b":4,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":27,"t":"Креативность","a":"Как подавать свою экспертизу нестандартно, чтобы запоминаться.","m":null,"mid":92,"b":4,"tags":["camera","ideas"],"lvl":["t","p","r"]},
+{"c":"camera","n":28,"t":"Простая схема света дома","a":"Как поставить свет без студии, чтобы лицо выглядело хорошо.","m":null,"mid":93,"b":4,"tags":["camera","gear"],"lvl":["t","p","r"]},
+{"c":"camera","n":29,"t":"Взаимодействие со зрителем","a":"Как вовлекать зрителя, чтобы он чувствовал разговор, а не лекцию.","m":null,"mid":94,"b":4,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":30,"t":"Внимание и фокус в кадре","a":"Упражнения, чтобы не сбиваться и держать мысль во время записи.","m":null,"mid":95,"b":4,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":31,"t":"Твоя уникальность","a":"Как найти и показать то, что отличает тебя от других авторов.","m":null,"mid":96,"b":4,"tags":["camera","ideas"],"lvl":["t","p","r"]},
+{"c":"camera","n":32,"t":"Уверенный взгляд","a":"Как смотреть в камеру так, чтобы тебе доверяли.","m":null,"mid":97,"b":4,"tags":["camera"],"lvl":["t","p","r"]},
+{"c":"camera","n":33,"t":"Где брать идеи для роликов","a":"Как находить актуальные темы в своей нише.","m":null,"mid":98,"b":4,"tags":["camera","ideas"],"lvl":["t","p","r"]}
+];
+const CLUB="4309233364";
+const COURSES={
+  school:{id:"school",title:"Школа YouTube",topic:7,sub:"От идеи до канала, который растёт и продаёт",icon:"📚"},
+  camera:{id:"camera",title:"Работа в кадре",topic:6,sub:"Уверенно говорить на камеру: голос, взгляд, подача",icon:"🎬"},
+  producer:{id:"producer",title:"Курс для YouTube-продюсеров",topic:5,sub:"Клиенты, звонки, аудит, команда и своё агентство",icon:"💰"}
+};
+const TOPICS={rules:14,general:1,tasting:9,recipe:10,filling:8,bakery:2,materials:3,streams:4,r:11,p:12,t:13};
+const LEVELS={
+  t:{name:"Тесто",icon:"🥟",chat:"t",line:"Старт: до 1&nbsp;000 подписчиков"},
+  p:{name:"На подъёме",icon:"🔥",chat:"p",line:"Рост: от 1&nbsp;000 до 10&nbsp;000"},
+  r:{name:"Профитроль",icon:"👑",chat:"r",line:"Масштаб: 10&nbsp;000+ и доход"},
+  prod:{name:"Продюсер",icon:"💼",chat:"p",line:"Делаешь каналы для клиентов"}
+};
+const THEMES=[
+  ["all","Все"],["ideas","Идеи"],["views","Просмотры"],["packaging","Обложки и названия"],["script","Сценарий"],
+  ["camera","Кадр"],["editing","Монтаж"],["gear","Техника"],["sales","Продажи"],["producer","Продюсерам"]
+];
+const tagLabel=t=>({ideas:"Идеи",views:"Просмотры",packaging:"Упаковка",ctr:"Кликабельность",script:"Сценарий",retention:"Удержание",camera:"Кадр",editing:"Монтаж",gear:"Техника",sales:"Продажи",funnel:"Воронка",audience:"Аудитория",producer:"Продюсерам",clients:"Клиенты",team:"Команда",seo:"SEO",analytics:"Аналитика",algo:"Алгоритмы",plan:"Контент-план",start:"Старт",strategy:"Стратегия",shorts:"Shorts",competitors:"Конкуренты",client_work:"Работа с клиентом"}[t]||t);
+
+L.forEach(l=>{l.id=l.c+"-"+l.n});
+const byId=Object.fromEntries(L.map(l=>[l.id,l]));
+const link=(topic,mid)=>`https://t.me/c/${CLUB}/${topic}${mid?"/"+mid:""}`;
+const lessonLink=l=>link(COURSES[l.c].topic,l.mid);
+const mins=n=>{if(n==null)return"короткий урок";const a=n%10,b=n%100;return n+" "+(a===1&&b!==11?"минута":a>=2&&a<=4&&(b<12||b>14)?"минуты":"минут")};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- storage: Telegram CloudStorage → localStorage → memory ---------- */
+const TG=window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.initData?window.Telegram.WebApp:null;
+let mem={};
+const store={
+  get(k){return new Promise(res=>{
+    if(TG&&TG.CloudStorage){try{TG.CloudStorage.getItem(k,(e,v)=>res(e||!v?null:JSON.parse(v)));return}catch(e){}}
+    try{const v=localStorage.getItem("pr_"+k);res(v?JSON.parse(v):(mem[k]??null))}catch(e){res(mem[k]??null)}
+  })},
+  set(k,v){mem[k]=v;const s=JSON.stringify(v);
+    if(TG&&TG.CloudStorage){try{TG.CloudStorage.setItem(k,s);return}catch(e){}}
+    try{localStorage.setItem("pr_"+k,s)}catch(e){}
+  }
+};
+
+/* ---------- state ---------- */
+const S={tab:"home",done:{},profile:null,course:null,filter:"all",q:"",quiz:null,name:"Участник"};
+if(TG){try{TG.ready();TG.expand();const u=TG.initDataUnsafe&&TG.initDataUnsafe.user;if(u&&u.first_name)S.name=u.first_name}catch(e){}}
+
+/* ---------- quiz ---------- */
+const QUIZ=[
+  {k:"stage",q:"Где сейчас твой канал?",o:[
+    ["none","🌱","Канала ещё нет или только завёл"],["t","🥟","До 1&nbsp;000 подписчиков"],["p","🔥","От 1&nbsp;000 до 10&nbsp;000"],["r","👑","Больше 10&nbsp;000"],["prod","💼","Я делаю каналы для клиентов"]]},
+  {k:"pain",q:"Что сейчас мешает больше всего?",o:[
+    ["ideas","💡","Не знаю, о чём снимать"],["views","📉","Мало просмотров"],["camera","😬","Неловко или страшно в кадре"],["retention","⏱","Ролики не досматривают"],["money","💸","Канал не приносит денег"],["clients","🤝","Хочу брать клиентов на продюсирование"]]},
+  {k:"cam",q:"Как тебе в кадре?",o:[
+    ["fear","🫣","Боюсь камеры, зажимаюсь"],["flat","😐","Нормально, но звучу скучно"],["ok","😎","Уверенно, хочу прокачать подачу"],["off","🙈","Я не снимаюсь в кадре"]]},
+  {k:"goal",q:"Главная цель на ближайшие 3 месяца?",o:[
+    ["first","🎯","Первые 1&nbsp;000 подписчиков"],["stable","📈","Стабильные просмотры на каждом ролике"],["income","💰","Доход с канала"],["clients","🧾","Первые клиенты как продюсер"]]},
+  {k:"time",q:"Сколько времени в неделю готов учиться?",o:[
+    ["s","☕","1-2 часа"],["m","⏳","3-5 часов"],["l","🚀","Больше 5 часов"]]}
+];
+const PAIN={ideas:{ideas:3,competitors:2,plan:2,strategy:1},views:{views:3,algo:2,seo:2,packaging:2,ctr:2},camera:{},retention:{script:3,retention:3,editing:2},money:{sales:3,funnel:3,audience:2},clients:{producer:4,clients:2,sales:1}};
+const GOAL={first:{start:3,packaging:2,plan:2,ideas:1,gear:1},stable:{views:2,ctr:2,analytics:2,retention:2},income:{sales:2,funnel:2,audience:2},clients:{producer:3,clients:2,client_work:2}};
+const CAMB={fear:{1:5,2:3,3:1,4:0},flat:{1:1,2:5,3:4,4:1},ok:{1:0,2:1,3:2,4:4},off:{1:0,2:0,3:0,4:0}};
+const LEN={s:6,m:10,l:14};
+
+function buildTrack(a){
+  const lvl=a.stage==="none"?"t":a.stage;
+  const isProd=lvl==="prod"||a.pain==="clients"||a.goal==="clients";
+  const score=l=>{
+    let s=0;
+    if(l.c==="producer"){ if(!isProd) return -1; s+=6+(lvl==="prod"?2:0); }
+    else if(l.c==="camera"){ s+=CAMB[a.cam][l.b]||0; if(a.pain==="camera") s+=3; if(a.cam==="off") return -1; }
+    else{ const ul=lvl==="prod"?"p":lvl; if(l.lvl.includes(ul)) s+=2; else s-=2; if(a.stage==="none"&&l.n<=6) s+=3; }
+    const pw=PAIN[a.pain]||{},gw=GOAL[a.goal]||{};
+    l.tags.forEach(t=>{s+=(pw[t]||0)+(gw[t]||0)});
+    return s;
+  };
+  const ranked=L.map(l=>({l,s:score(l)})).filter(x=>x.s>0).sort((x,y)=>y.s-x.s);
+  let pick=ranked.slice(0,LEN[a.time]).map(x=>x.l);
+  if(!pick.length) pick=courseLessons("school").slice(0,LEN[a.time]);
+  const off={school:0,camera:-.4,producer:lvl==="prod"?-30:30};
+  pick.sort((x,y)=>(x.n+off[x.c]*(x.c==="camera"?x.n:1))-(y.n+off[y.c]*(y.c==="camera"?y.n:1)));
+  const focus={ideas:"идеи и контент-план",views:"просмотры и упаковку",camera:"уверенность в кадре",retention:"удержание и сценарий",money:"продажи с канала",clients:"поиск клиентов"}[a.pain];
+  const goal={first:"первые 1&nbsp;000 подписчиков",stable:"стабильные просмотры",income:"доход с канала",clients:"первых клиентов"}[a.goal];
+  return {lvl,ids:pick.map(l=>l.id),focus,goal,at:Date.now()};
+}
+
+/* ---------- helpers ---------- */
+const doneCount=ids=>ids.filter(id=>S.done[id]).length;
+const courseLessons=c=>L.filter(l=>l.c===c);
+function trackState(){
+  if(!S.profile) return null;
+  const ids=S.profile.ids; const cur=ids.findIndex(id=>!S.done[id]);
+  return {ids,cur,total:ids.length,done:doneCount(ids)};
+}
+function toast(t){const el=document.createElement("div");el.className="toast";el.textContent=t;el.setAttribute("role","status");document.body.appendChild(el);setTimeout(()=>el.remove(),1800)}
+function openLink(url){ if(TG&&url.startsWith("https://t.me/")){try{TG.openTelegramLink(url);return true}catch(e){}} return false }
+document.addEventListener("click",e=>{const a=e.target.closest("a[href^='https://t.me/']");if(a&&openLink(a.href))e.preventDefault()});
+
+const I={
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+  courses:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>',
+  live:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 000 11.4M17.7 6.3a8 8 0 010 11.4"/></svg>',
+  mat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>',
+  me:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  chev:'<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
+  lock:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>',
+  check:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>'
+};
+const DRIP='<div class="drip" aria-hidden="true"><svg viewBox="0 0 400 34" preserveAspectRatio="none"><path fill="currentColor" d="M0 0h400v10c-14 0-16 6-26 6s-10-6-24-6-12 18-24 18-10-18-22-18-14 7-28 7-14-7-26-7-12 22-24 22-12-22-26-22-12 5-26 5-14-5-26-5-12 14-24 14-12-14-24-14-14 6-28 6-12-6-24-6-10 12-22 12S12 10 0 10z"/></svg></div>';
+
+/* ---------- screens ---------- */
+function itemLesson(l,opt={}){
+  const d=S.done[l.id]; const cls=opt.locked?"lock":d?"done":opt.now?"now":"";
+  const mark=opt.locked?I.lock:d?I.check:(opt.idx??l.n);
+  const sub=opt.course?COURSES[l.c].title+" · "+mins(l.m):mins(l.m);
+  return `<button class="item${opt.locked?" locked":""}" data-lesson="${l.id}"${opt.locked?' data-locked="1"':""}>
+    <span class="num ${cls}">${mark}</span>
+    <span class="txt"><b>${esc(l.t)}</b><span>${esc(sub)}</span></span>${I.chev}</button>`;
+}
+function courseCard(c){
+  const ls=courseLessons(c.id),dn=doneCount(ls.map(l=>l.id)),tot=ls.length,m=ls.reduce((s,l)=>s+(l.m||0),0);
+  return `<button class="course" data-course="${c.id}">
+    <div class="row between"><span style="font-size:26px">${c.icon}</span><span class="chip nums">${dn} / ${tot}</span></div>
+    <h3>${esc(c.title)}</h3><p class="muted">${esc(c.sub)}</p>
+    <div class="bar"><i style="width:${tot?dn/tot*100:0}%"></i></div>
+    <div class="meta"><span class="eyebrow">${tot} уроков${m?" · "+Math.round(m/60)+" ч видео":""}</span></div>
+  </button>`;
+}
+
+function Home(){
+  const t=trackState();
+  let hero;
+  if(!t){
+    hero=`<section class="hero">${DRIP}
+      <span class="eyebrow">Твой план обучения</span>
+      <h1>Подбери уроки под себя</h1>
+      <p class="muted">5 вопросов, одна минута. Получишь свой трек из уроков всех курсов клуба: в том порядке, в котором их стоит смотреть именно тебе.</p>
+      <button class="btn primary block" data-act="quiz">Пройти тест</button>
+    </section>`;
+  }else{
+    const lv=LEVELS[S.profile.lvl];
+    const cur=t.cur>=0?byId[t.ids[t.cur]]:null;
+    hero=`<section class="hero">${DRIP}
+      <div class="row between"><span class="eyebrow">Твой трек · ${lv.icon} ${lv.name}</span><span class="chip nums">${t.done} / ${t.total}</span></div>
+      <h1>${cur?"Следующий урок":"Трек пройден"}</h1>
+      ${cur?`<button class="item" style="background:var(--surface-2);border-radius:14px;border:0" data-lesson="${cur.id}">
+        <span class="num now">${t.cur+1}</span><span class="txt"><b>${esc(cur.t)}</b><span>${COURSES[cur.c].title} · ${mins(cur.m)}</span></span>${I.chev}</button>`
+        :`<p class="muted">Ты прошёл все уроки трека. Пройди тест заново, и мы соберём следующий уровень.</p>`}
+      <div class="bar"><i style="width:${t.done/t.total*100}%"></i></div>
+      <div class="row"><button class="btn ghost" style="flex:1" data-act="track">Весь трек</button>${cur?"":`<button class="btn primary" style="flex:1" data-act="quiz">Новый трек</button>`}</div>
+    </section>`;
+  }
+  const lv=S.profile?LEVELS[S.profile.lvl]:null;
+  return `${hero}
+  <section class="section"><div class="row between"><h2>Ближайший эфир</h2><button class="muted" data-tab="live">Все</button></div>
+    <div class="card event"><div class="date"><b>29</b><span>окт</span></div>
+      <div class="stack" style="gap:4px;min-width:0"><h3>Открытый эфир клуба</h3><p class="muted">19:00 по Москве · разборы каналов в прямом эфире</p></div></div>
+  </section>
+  <section class="section"><h2>Курсы</h2><div class="courses">${Object.values(COURSES).map(courseCard).join("")}</div></section>
+  <section class="section"><h2>В клубе</h2><div class="links">
+    <a class="link" href="${link(TOPICS.tasting)}" target="_blank" rel="noopener"><b>🍰 Дегустация</b><span>Разборы твоих роликов</span></a>
+    <a class="link" href="${link(TOPICS.recipe)}" target="_blank" rel="noopener"><b>📅 Рецепт недели</b><span>Задание недели</span></a>
+    <a class="link" href="${link(lv?TOPICS[lv.chat]:TOPICS.general)}" target="_blank" rel="noopener"><b>${lv?lv.icon+" Чат «"+lv.name+"»":"💬 Общий чат"}</b><span>${lv?"Люди твоего уровня":"Вопросы и общение"}</span></a>
+    <a class="link" href="${link(TOPICS.rules)}" target="_blank" rel="noopener"><b>📌 Начни здесь</b><span>Правила и навигация</span></a>
+  </div></section>`;
+}
+
+function Track(){
+  const t=trackState(); if(!t) return Home();
+  const lv=LEVELS[S.profile.lvl];
+  return `<button class="back" data-tab="home">← Назад</button>
+  <section class="stack"><span class="eyebrow">${lv.icon} ${lv.name} · ${lv.line}</span>
+    <h1>Твой трек</h1>
+    <p class="muted">Фокус на ${S.profile.focus}. Цель: ${S.profile.goal}. Открыт один урок: посмотри его и отметь просмотренным, тогда откроется следующий. Все курсы целиком всегда доступны во вкладке «Курсы».</p>
+    <div class="row"><div class="bar" style="flex:1"><i style="width:${t.done/t.total*100}%"></i></div><span class="nums muted">${t.done} / ${t.total}</span></div>
+  </section>
+  <div class="list" style="margin-top:18px">${t.ids.map((id,i)=>itemLesson(byId[id],{idx:i+1,course:1,now:i===t.cur,locked:t.cur>=0&&i>t.cur})).join("")}</div>
+  <button class="btn ghost block" style="margin-top:14px" data-act="quiz">Пройти тест заново</button>`;
+}
+
+function Courses(){
+  if(S.course){
+    const c=COURSES[S.course]; const ls=courseLessons(c.id); const dn=doneCount(ls.map(l=>l.id));
+    return `<button class="back" data-act="courses">← Все курсы</button>
+    <section class="stack"><span class="eyebrow">${c.icon} ${ls.length} уроков</span><h1>${esc(c.title)}</h1><p class="muted">${esc(c.sub)}</p>
+      <div class="row"><div class="bar" style="flex:1"><i style="width:${dn/ls.length*100}%"></i></div><span class="nums muted">${dn} / ${ls.length}</span></div>
+      <a class="btn ghost" href="${link(c.topic)}" target="_blank" rel="noopener">Открыть ветку курса в клубе</a></section>
+    <div class="list" style="margin-top:18px">${ls.map(l=>itemLesson(l)).join("")}</div>`;
+  }
+  const q=S.q.trim().toLowerCase();
+  const filtering=q||S.filter!=="all";
+  const res=filtering?L.filter(l=>(S.filter==="all"||l.tags.includes(S.filter)||(S.filter==="packaging"&&l.tags.includes("ctr"))||(S.filter==="script"&&l.tags.includes("retention"))||(S.filter==="sales"&&l.tags.includes("funnel")))&&(!q||(l.t+" "+l.a).toLowerCase().includes(q))):[];
+  return `<section class="stack"><h1>Курсы</h1>
+    <input class="search" id="q" type="search" placeholder="Найти урок: превью, звук, клиенты…" value="${esc(S.q)}" autocomplete="off">
+    <div class="chips" role="group" aria-label="Темы">${THEMES.map(([k,v])=>`<button class="fchip" data-filter="${k}" aria-pressed="${S.filter===k}">${v}</button>`).join("")}</div></section>
+  <div id="cres" style="margin-top:16px">${filtering
+    ?(res.length?`<p class="muted" style="margin-bottom:10px">Найдено уроков: <span class="nums">${res.length}</span></p><div class="list">${res.map(l=>itemLesson(l,{course:1})).join("")}</div>`:`<div class="empty">Ничего не нашлось. Попробуй другое слово или тему.</div>`)
+    :`<div class="courses">${Object.values(COURSES).map(courseCard).join("")}</div>`}</div>`;
+}
+
+function Live(){
+  return `<section class="stack"><h1>Эфиры</h1><p class="muted">Эфиры клуба проходят в Telegram. Записи появляются в ветке «Записи эфиров и вебинаров».</p></section>
+  <section class="section"><span class="eyebrow">Скоро</span>
+    <div class="card event"><div class="date"><b>29</b><span>окт</span></div>
+      <div class="stack" style="gap:4px;min-width:0"><h3>Открытый эфир клуба</h3><p class="muted">Четверг, 19:00 МСК. Разборы каналов, ответы на вопросы.</p></div></div>
+  </section>
+  <section class="section"><span class="eyebrow">Записи</span>
+    <div class="empty">Первая запись появится после эфира 29 октября.</div>
+    <a class="btn ghost block" href="${link(TOPICS.streams)}" target="_blank" rel="noopener">Открыть ветку с записями</a>
+  </section>
+  <section class="section"><span class="eyebrow">Регулярно в клубе</span>
+    <div class="list">
+      <a class="item" href="${link(TOPICS.tasting)}" target="_blank" rel="noopener"><span class="num">🍰</span><span class="txt"><b>Дегустация</b><span>Разборы роликов участников</span></span>${I.chev}</a>
+      <a class="item" href="${link(TOPICS.filling)}" target="_blank" rel="noopener"><span class="num">🔍</span><span class="txt"><b>Разбор начинки</b><span>Разбираем чужие успешные ролики</span></span>${I.chev}</a>
+      <a class="item" href="${link(TOPICS.bakery)}" target="_blank" rel="noopener"><span class="num">🏆</span><span class="txt"><b>Итоги пекарни</b><span>Результаты участников</span></span>${I.chev}</a>
+    </div></section>`;
+}
+
+function Mat(){
+  return `<section class="stack"><h1>Материалы</h1><p class="muted">Шаблоны и чек-листы из уроков. Сделай копию документа и работай в своей.</p></section>
+  <section class="section"><span class="eyebrow">Шаблоны и чек-листы</span><div class="list">
+    <a class="item" href="${link(TOPICS.materials,100)}" target="_blank" rel="noopener"><span class="num">✅</span><span class="txt"><b>Чек-лист идеального сценария</b><span>PDF · к уроку 6 «Школы YouTube»</span></span>${I.chev}</a>
+    <a class="item" href="${link(TOPICS.materials,101)}" target="_blank" rel="noopener"><span class="num">📊</span><span class="txt"><b>Таблица анализа конкурентов</b><span>Google Таблица · к уроку 3</span></span>${I.chev}</a>
+    <a class="item" href="${link(TOPICS.materials,101)}" target="_blank" rel="noopener"><span class="num">📝</span><span class="txt"><b>Простая структура сценария</b><span>Google Документ · к уроку 6</span></span>${I.chev}</a>
+    <a class="item" href="${link(TOPICS.materials,101)}" target="_blank" rel="noopener"><span class="num">📝</span><span class="txt"><b>Расширенная структура сценария</b><span>Google Документ · к уроку 6</span></span>${I.chev}</a>
+  </div></section>
+  <section class="section"><span class="eyebrow">Гайды и статьи</span>
+    <div class="list">
+      ${["Как выбрать нишу, в которой есть деньги","100 тем для первых роликов","Как упаковать канал за вечер","Первые деньги с канала: 5 способов"].map(t=>`<div class="item locked"><span class="num lock">${I.lock}</span><span class="txt"><b>${t}</b><span>Скоро</span></span></div>`).join("")}
+    </div></section>`;
+}
+
+function Me(){
+  const all=L.length,dn=doneCount(L.map(l=>l.id)),m=L.filter(l=>S.done[l.id]).reduce((s,l)=>s+(l.m||5),0);
+  const lv=S.profile?LEVELS[S.profile.lvl]:null;
+  return `<section class="hero">${DRIP}
+    <div class="level" style="margin-top:18px"><div class="ring">${lv?lv.icon:"🥐"}</div>
+      <div class="stack" style="gap:6px;min-width:0"><h1 style="margin:0;font-size:22px">${esc(S.name)}</h1>
+      <div class="row" style="flex-wrap:wrap;gap:6px"><span class="chip glaze">Первопроходец</span>${lv?`<span class="chip dough">${lv.name}</span>`:""}</div></div></div>
+    <p class="muted">Статус «Первопроходец» есть у тех, кто вступил в клуб до 15 ноября.</p>
+  </section>
+  <section class="section"><h2>Прогресс</h2>
+    <div class="links">
+      <div class="link"><b class="nums" style="font-size:24px">${dn}</b><span>из ${all} уроков</span></div>
+      <div class="link"><b class="nums" style="font-size:24px">${m}</b><span>минут обучения</span></div>
+    </div>
+    <div class="list">${Object.values(COURSES).map(c=>{const ls=courseLessons(c.id),d=doneCount(ls.map(l=>l.id));return `<button class="item" data-course="${c.id}"><span class="num">${c.icon}</span><span class="txt"><b>${c.title}</b><span class="nums">${d} из ${ls.length}</span></span>${I.chev}</button>`}).join("")}</div>
+  </section>
+  <section class="section"><h2>Настройки</h2><div class="list">
+    <button class="item" data-act="quiz"><span class="num">🧭</span><span class="txt"><b>${S.profile?"Пройти тест заново":"Подобрать уроки под себя"}</b><span>5 вопросов</span></span>${I.chev}</button>
+    <a class="item" href="${link(TOPICS.rules)}" target="_blank" rel="noopener"><span class="num">📌</span><span class="txt"><b>Правила клуба</b><span>Ветка «Начни здесь»</span></span>${I.chev}</a>
+    <a class="item" href="https://t.me/profitrolik_club_bot" target="_blank" rel="noopener"><span class="num">🤖</span><span class="txt"><b>Подписка и поддержка</b><span>@profitrolik_club_bot</span></span>${I.chev}</a>
+    <button class="item" data-act="reset"><span class="num">↺</span><span class="txt"><b>Сбросить прогресс</b><span>Отметки просмотра и трек</span></span></button>
+  </div></section>`;
+}
+
+function Quiz(){
+  const st=S.quiz; const q=QUIZ[st.i];
+  return `<div class="quiz">
+    <div class="row between"><button class="back" data-act="qback">← ${st.i?"Назад":"Выйти"}</button><span class="muted nums">${st.i+1} из ${QUIZ.length}</span></div>
+    <div class="steps">${QUIZ.map((_,i)=>`<i class="${i<=st.i?"on":""}"></i>`).join("")}</div>
+    <h1>${q.q}</h1>
+    <div class="opts">${q.o.map(([v,e,t])=>`<button class="opt" data-ans="${v}"><span class="em">${e}</span><span>${t}</span></button>`).join("")}</div>
+  </div>`;
+}
+
+function Result(){
+  const p=S.profile, lv=LEVELS[p.lvl];
+  const first=p.ids.slice(0,3).map(id=>byId[id]);
+  const cnt={};p.ids.forEach(id=>{const c=byId[id].c;cnt[c]=(cnt[c]||0)+1});
+  return `<section class="hero">${DRIP}
+    <div class="level" style="margin-top:18px"><div class="ring">${lv.icon}</div><div class="stack" style="gap:4px"><span class="eyebrow">Твой уровень</span><h1 style="margin:0">${lv.name}</h1></div></div>
+    <p>Собрали трек из <b class="nums">${p.ids.length}</b> уроков: фокус на ${p.focus}, цель: ${p.goal}.</p>
+    <div class="row" style="flex-wrap:wrap;gap:6px">${Object.entries(cnt).map(([c,n])=>`<span class="chip">${COURSES[c].icon} ${COURSES[c].title}: ${n}</span>`).join("")}</div>
+  </section>
+  <section class="section"><h2>Начни с этих</h2><div class="list">${first.map((l,i)=>itemLesson(l,{idx:i+1,course:1,now:i===0,locked:i>0})).join("")}</div>
+    <button class="btn primary block" data-lesson="${first[0].id}">Смотреть первый урок</button>
+    <button class="btn ghost block" data-act="track">Весь трек</button>
+    <a class="btn ghost block" href="${link(TOPICS[lv.chat])}" target="_blank" rel="noopener">Чат уровня «${LEVELS[lv.chat].name}»</a>
+  </section>`;
+}
+
+function Sheet(l){
+  const c=COURSES[l.c], d=!!S.done[l.id];
+  const t=trackState(); const inTrack=t&&t.ids.includes(l.id);
+  return `<div class="scrim" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(l.t)}">
+    <div class="grab"></div>
+    <div class="row" style="flex-wrap:wrap;gap:6px"><span class="chip">${c.icon} ${c.title}</span><span class="chip nums">Урок ${l.n}</span><span class="chip">${mins(l.m)}</span>${inTrack?'<span class="chip dough">В твоём треке</span>':""}</div>
+    <h2 style="font-size:22px">${esc(l.t)}</h2>
+    <p class="muted">${esc(l.a)}</p>
+    ${l.tags.filter(x=>x!=="producer").length?`<div class="row" style="flex-wrap:wrap;gap:6px">${l.tags.filter(x=>x!=="producer").map(x=>`<span class="eyebrow">#${tagLabel(x)}</span>`).join("")}</div>`:""}
+    <a class="btn primary block" href="${lessonLink(l)}" target="_blank" rel="noopener">▶ Смотреть в клубе</a>
+    <button class="btn ${d?"ghost":"ghost"} block" data-done="${l.id}">${d?I.check+" Просмотрено":"Отметить просмотренным"}</button>
+  </div></div>`;
+}
+
+/* ---------- render ---------- */
+const TABS=[["home","Главная",I.home],["courses","Курсы",I.courses],["live","Эфиры",I.live],["mat","Материалы",I.mat],["me","Профиль",I.me]];
+function render(keepScroll){
+  const app=document.getElementById("app");
+  const top=`<header class="top"><img src="${LOGO}" alt="Профитролик"><div class="who"><span class="eyebrow">Профитролик · клуб</span><b>Привет, ${esc(S.name)}</b></div><span class="chip glaze">Первопроходец</span></header>`;
+  let body;
+  if(S.quiz) body=Quiz();
+  else if(S.tab==="result") body=Result();
+  else if(S.tab==="track") body=Track();
+  else body={home:Home,courses:Courses,live:Live,mat:Mat,me:Me}[S.tab]();
+  app.innerHTML=(S.quiz?"":top)+body;
+  const cur=S.tab==="track"||S.tab==="result"?"home":S.tab;
+  document.getElementById("tabs").innerHTML=TABS.map(([k,v,ic])=>`<button class="tab" data-tab="${k}"${cur===k&&!S.quiz?' aria-current="page"':""}>${ic}<span>${v}</span></button>`).join("");
+  if(!keepScroll) window.scrollTo(0,0);
+  const q=document.getElementById("q");
+  if(q){q.addEventListener("input",()=>{S.q=q.value;const pos=q.selectionStart;render(true);const n=document.getElementById("q");n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}})}
+}
+function sheet(id){const l=byId[id];document.getElementById("layer").innerHTML=Sheet(l)}
+function closeSheet(){document.getElementById("layer").innerHTML=""}
+
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-tab],[data-act],[data-lesson],[data-course],[data-filter],[data-ans],[data-done]");
+  if(!el) return;
+  if(el.dataset.act==="close"&&e.target!==el) return;
+  if(el.dataset.tab){S.tab=el.dataset.tab;S.course=null;S.quiz=null;closeSheet();render();return}
+  if(el.dataset.course){S.tab="courses";S.course=el.dataset.course;render();return}
+  if(el.dataset.filter){S.filter=el.dataset.filter;render(true);return}
+  if(el.dataset.lesson){
+    if(el.dataset.locked){toast("Откроется после предыдущего урока");return}
+    sheet(el.dataset.lesson);return}
+  if(el.dataset.done){
+    const id=el.dataset.done;const was=!!S.done[id];
+    if(was) delete S.done[id]; else S.done[id]=Date.now();
+    store.set("done",S.done);
+    const t=trackState();
+    closeSheet();render(true);
+    if(!was&&t&&t.ids.includes(id)){ toast(t.cur>=0?"Готово! Следующий урок трека открыт":"Трек пройден целиком 🎉") } else toast(was?"Отметка снята":"Отмечено");
+    return}
+  if(el.dataset.ans){
+    const st=S.quiz; st.a[QUIZ[st.i].k]=el.dataset.ans;
+    if(st.i<QUIZ.length-1){st.i++;render()}
+    else{S.profile=buildTrack(st.a);store.set("profile",S.profile);S.quiz=null;S.tab="result";render()}
+    return}
+  const a=el.dataset.act;
+  if(a==="quiz"){S.quiz={i:0,a:{}};closeSheet();render()}
+  else if(a==="qback"){if(S.quiz.i)S.quiz.i--;else S.quiz=null;render()}
+  else if(a==="track"){S.tab="track";render()}
+  else if(a==="courses"){S.course=null;render()}
+  else if(a==="close"){closeSheet()}
+  else if(a==="reset"){
+    if(el.dataset.sure){S.done={};S.profile=null;store.set("done",{});store.set("profile",null);toast("Прогресс сброшен");render()}
+    else{el.dataset.sure="1";el.querySelector(".txt b").textContent="Нажми ещё раз, чтобы сбросить";}
+  }
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
+
+(async()=>{
+  render();
+  const [d,p]=await Promise.all([store.get("done"),store.get("profile")]);
+  if(d) S.done=d;
+  if(p) S.profile=p;
+  render();
+})();
+</script>
+
+</body>
+</html>
