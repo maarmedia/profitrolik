@@ -239,7 +239,8 @@ const L=[
 const CLUB="4428403046";
 const MAP={"22":4,"23":5,"24":6,"25":7,"26":8,"27":9,"28":10,"29":11,"30":12,"31":13,"32":14,"33":15,"34":16,"35":17,"36":18,"37":19,"38":20,"39":21,"40":22,"41":23,"42":24,"43":25,"44":26,"45":27,"46":28,"47":29,"48":30,"49":31,"50":66,"51":67,"52":68,"53":69,"54":70,"55":71,"56":72,"57":73,"58":74,"59":75,"60":76,"61":77,"62":78,"63":79,"64":80,"65":32,"66":33,"67":34,"68":35,"69":36,"70":37,"71":38,"72":39,"73":40,"74":41,"75":42,"76":43,"77":44,"78":45,"79":46,"80":47,"81":48,"82":49,"83":50,"84":51,"85":52,"86":53,"87":54,"88":55,"89":56,"90":57,"91":58,"92":59,"93":60,"94":61,"95":62,"96":63,"97":64,"98":65,"99":81,"100":82,"101":83};
 const CHATS={general:"4309233364",t:"4337275688",p:"4494387479",r:"3966146534",taste:"4296098520",wins:"3983102637"};
-const chat=k=>`https://t.me/c/${CHATS[k]}`;
+const FIRST={general:112};
+const chat=k=>`https://t.me/c/${CHATS[k]}/${FIRST[k]||1}`;
 const COURSES={
   school:{id:"school",title:"Школа YouTube",topic:7,sub:"От идеи до канала, который растёт и продаёт",icon:"📚"},
   camera:{id:"camera",title:"Работа в кадре",topic:6,sub:"Уверенно говорить на камеру: голос, взгляд, подача",icon:"🎬"},
@@ -261,9 +262,10 @@ const tagLabel=t=>({ideas:"Идеи",views:"Просмотры",packaging:"Уп�
 L.forEach(l=>{l.id=l.c+"-"+l.n});
 const byId=Object.fromEntries(L.map(l=>[l.id,l]));
 const FEED=`https://t.me/c/${CLUB}`;
-const post=old=>MAP[old]?`${FEED}/${MAP[old]}`:FEED;
+const HOME=`${FEED}/84`;
+const post=old=>MAP[old]?`${FEED}/${MAP[old]}`:HOME;
 const link=(topic,mid)=>{ if(mid) return post(mid);
-  return ({1:chat("general"),2:FEED,3:post(99),4:FEED,5:post(50),6:post(65),7:post(22),8:FEED,9:chat("taste"),10:FEED,11:chat("r"),12:chat("p"),13:chat("t"),14:FEED+"/"+3})[topic]||FEED; };
+  return ({1:chat("general"),2:HOME,3:post(99),4:HOME,5:post(50),6:post(65),7:post(22),8:HOME,9:chat("taste"),10:HOME,11:chat("r"),12:chat("p"),13:chat("t"),14:FEED+"/"+3})[topic]||HOME; };
 const lessonLink=l=>link(COURSES[l.c].topic,l.mid);
 const mins=n=>{if(n==null)return"короткий урок";const a=n%10,b=n%100;return n+" "+(a===1&&b!==11?"минута":a>=2&&a<=4&&(b<12||b>14)?"минуты":"минут")};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -476,7 +478,7 @@ function chatsBlock(lv){
   const it=(href,icon,title,sub,mine)=>`<a class="item" href="${href}" target="_blank" rel="noopener"><span class="num">${icon}</span><span class="txt"><b>${title}</b><span>${sub}</span></span>${mine?'<span class="chip dough">Твой</span>':I.chev}</a>`;
   const my=lv?lv.chat:null;
   return `<section class="section"><h2>Клуб в Telegram</h2><div class="list">
-    ${it(FEED,"📚","Лента клуба","Уроки, эфиры, задания недели")}
+    ${it(HOME,"📚","Лента клуба","Уроки, эфиры, задания недели")}
     ${it(chat("general"),"💬","Общий чат","Знакомство и общение участников")}
     ${it(chat("t"),"🥟","Тесто","Каналы до 1&nbsp;000 подписчиков",my==="t")}
     ${it(chat("p"),"🔥","На подъёме","От 1&nbsp;000 до 10&nbsp;000",my==="p")}
