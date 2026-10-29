@@ -384,7 +384,7 @@ const POSTS=[
   {t:"Чек-лист идеального сценария",s:"PDF в «Полезных материалах»",a:["script"],h:()=>link(TOPICS.materials,100),i:"✅"},
   {t:"Шаблоны структуры сценария",s:"Простая и расширенная структура",a:["script","regular"],h:()=>link(TOPICS.materials,101),i:"📝"},
   {t:"Таблица анализа конкурентов",s:"Найти темы, которые уже заходят",a:["ideas","growth"],h:()=>link(TOPICS.materials,101),i:"📊"},
-  {t:"Дегустация: разбор твоего ролика",s:"Принеси ролик, разберём вживую",a:["packaging","script","camera","editing"],h:()=>link(TOPICS.tasting),i:"🍰"},
+  {t:"Дегустация: разбор твоего ролика",s:"Выложи ролик и получи отзывы участников",a:["packaging","script","camera","editing"],h:()=>link(TOPICS.tasting),i:"🍰"},
   {t:"Разбор начинки",s:"Разборы чужих успешных роликов",a:["ideas","packaging","growth"],h:()=>link(TOPICS.filling),i:"🔍"},
   {t:"Рецепт недели",s:"Одно задание на неделю, чтобы держать ритм",a:["regular","ideas"],h:()=>link(TOPICS.recipe),i:"📅"},
   {t:"Записи эфиров",s:"Разборы и ответы на вопросы",a:["sales","growth","clients"],h:()=>link(TOPICS.streams),i:"🎙"},
@@ -557,7 +557,7 @@ function chatsBlock(lv){
     ${it(chat("t"),"🥟","Тесто","Каналы до 1&nbsp;000 подписчиков",my==="t")}
     ${it(chat("p"),"🔥","На подъёме","От 1&nbsp;000 до 10&nbsp;000",my==="p")}
     ${it(chat("r"),"👑","Профитроль","От 10&nbsp;000 и доход",my==="r")}
-    ${it(chat("taste"),"🍰","Дегустация","Присылай ролики на разбор")}
+    ${it(chat("taste"),"🍰","Дегустация","Выкладывай работы, давай отзывы другим")}
     ${it(chat("wins"),"🏆","Итоги и победы","Делимся результатами")}
   </div></section>`;
 }
@@ -637,10 +637,10 @@ function Courses(){
     :`<div class="courses">${Object.values(COURSES).map(courseCard).join("")}</div>`}</div>`;
 }
 function Live(){
-  if(!S.member) return `<section class="stack"><h1>Эфиры</h1><p class="muted">В клубе живые эфиры не реже двух раз в месяц: «Дегустация» с разбором роликов участников и «Разбор начинки» с каналами экспертов, которые уже зарабатывают.</p></section>
+  if(!S.member) return `<section class="stack"><h1>Эфиры</h1><p class="muted">Раз в месяц закрытый эфир «Дегустация»: разбор работ участников и проверка заданий. Записи остаются в клубе, а «Разбор начинки» с каналами экспертов, которые уже зарабатывают, выходит в ленте.</p></section>
   ${eventCard(true)}
   <section class="section"><span class="eyebrow">Регулярно в клубе</span><div class="list">
-    ${lockRow("🍰","Дегустация","Разборы роликов участников вживую")}
+    ${lockRow("🍰","Дегустация","Отзывы участников и эфир-разбор раз в месяц")}
     ${lockRow("🔍","Разбор начинки","Каналы экспертов, которые уже зарабатывают")}
     ${lockRow("🎙","Записи эфиров","Все прошлые эфиры в одной ленте")}
   </div></section>`;
@@ -651,7 +651,7 @@ function Live(){
   </section>
   <section class="section"><span class="eyebrow">Регулярно в клубе</span>
     <div class="list">
-      <a class="item" href="${link(TOPICS.tasting)}" target="_blank" rel="noopener"><span class="num">🍰</span><span class="txt"><b>Дегустация</b><span>Разборы роликов участников</span></span>${I.chev}</a>
+      <a class="item" href="${link(TOPICS.tasting)}" target="_blank" rel="noopener"><span class="num">🍰</span><span class="txt"><b>Дегустация</b><span>Работы и отзывы участников</span></span>${I.chev}</a>
       <a class="item" href="${link(TOPICS.filling)}" target="_blank" rel="noopener"><span class="num">🔍</span><span class="txt"><b>Разбор начинки</b><span>Каналы экспертов, которые уже зарабатывают</span></span>${I.chev}</a>
     </div>
   </section>`;
@@ -769,7 +769,7 @@ function clubPitch(){
     <h3>Что откроется в клубе</h3>
     <div class="list">
       ${lockRow("📋","Рецепт недели","Каждый понедельник одно задание под твой уровень")}
-      ${lockRow("🍰","Дегустация","Живые разборы роликов участников")}
+      ${lockRow("🍰","Дегустация","Отзывы участников и эфир-разбор раз в месяц")}
       ${lockRow("🔍","Разбор начинки","Каналы экспертов, которые уже зарабатывают")}
       ${lockRow("💬","Чаты по уровням","Тесто, На подъёме, Профитроль")}
       ${lockRow("📚","Вся библиотека",L.length+" уроков: школа YouTube, работа в кадре, курс продюсера")}
