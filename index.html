@@ -637,7 +637,7 @@ function Courses(){
     :`<div class="courses">${Object.values(COURSES).map(courseCard).join("")}</div>`}</div>`;
 }
 function Live(){
-  if(!S.member) return `<section class="stack"><h1>Эфиры</h1><p class="muted">В клубе каждую неделю живые разборы: «Дегустация» по средам и «Разбор начинки» по пятницам.</p></section>
+  if(!S.member) return `<section class="stack"><h1>Эфиры</h1><p class="muted">В клубе живые эфиры не реже двух раз в месяц: «Дегустация» с разбором роликов участников и «Разбор начинки» с каналами экспертов, которые уже зарабатывают.</p></section>
   ${eventCard(true)}
   <section class="section"><span class="eyebrow">Регулярно в клубе</span><div class="list">
     ${lockRow("🍰","Дегустация","Разборы роликов участников вживую")}
