@@ -276,7 +276,13 @@ const TG=WA&&(WA.initData||(WA.platform&&WA.platform!=="unknown"))?WA:null;
 let mem={};
 const store={
   get(k){return new Promise(res=>{
-    if(TG&&TG.CloudStorage){try{TG.CloudStorage.getItem(k,(e,v)=>res(e||!v?null:JSON.parse(v)));return}catch(e){}}
+    if(TG&&TG.CloudStorage){try{
+      TG.CloudStorage.getItem(k,(error,value)=>{
+        if(error||!value){res(mem[k]??null);return}
+        try{res(JSON.parse(value))}catch{res(mem[k]??null)}
+      });
+      return
+    }catch(e){}}
     try{const v=localStorage.getItem("pr_"+k);res(v?JSON.parse(v):(mem[k]??null))}catch(e){res(mem[k]??null)}
   })},
   set(k,v){mem[k]=v;const s=JSON.stringify(v);
@@ -540,7 +546,7 @@ function Tools(){
     return `<button class="back" data-act="tools">← Все инструменты</button>
     <section class="stack"><span class="eyebrow">${x.i} Автоматизация с ИИ</span><h1>${x.t}</h1><p>${x.about}</p>
       ${x.status==="soon"?`<span class="chip dough" style="align-self:flex-start">Скоро в клубе</span>`:""}</section>
-    ${x.steps.length?`<section class="section"><h2>Как подключить</h2><div class="list">${x.steps.map((s,i)=>`<div class="item"><span class="num">${i+1}</span><span class="txt"><b style="font-weight:600">${s}</b></span></div>`).join("")}</div></section>`:""}
+    ${x.steps.length&&x.prompts.length?`<section class="section"><h2>Как подключить</h2><div class="list">${x.steps.map((s,i)=>`<div class="item"><span class="num">${i+1}</span><span class="txt"><b style="font-weight:600">${s}</b></span></div>`).join("")}</div></section>`:""}
     ${x.prompts.length?x.prompts.map((p,k)=>`<section class="section"><div class="row between"><h2>${p.t}</h2><button class="btn ghost" style="min-height:38px;padding:0 14px" data-copy="${x.id}:${k}">Скопировать</button></div><div class="prompt" id="pr-${x.id}-${k}">${esc(p.text)}</div></section>`).join("")
       :`<section class="section"><div class="empty">Промпт появится здесь, как только Стас его опубликует. Новые инструменты и обновления тоже будут в этой вкладке.</div></section>`}`;}
   return `<section class="stack"><h1>Автоматизация с ИИ</h1><p class="muted">Готовые промпты и навыки, которые снимают с тебя рутину: монтаж, сценарии, разбор тем. Скопировал, вставил в нейросеть, работаешь.</p></section>
