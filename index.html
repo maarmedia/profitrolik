@@ -531,7 +531,7 @@ function itemLesson(l,opt={}){
   const mark=gl?I.lock:d?I.check:fr?"🎁":(opt.idx??l.n);
   const sub=opt.why?opt.why:(opt.course?COURSES[l.c].title+" · "+mins(l.m):mins(l.m));
   return `<button class="item${gl?" locked":""}" data-lesson="${l.id}">
-    ${l.youtube?`<img class="lesson-thumb" src="https://i.ytimg.com/vi/${l.youtube}/hqdefault.jpg" alt="" loading="lazy">`:`<span class="num ${cls}">${mark}</span>`}
+    ${l.youtube?`<img class="lesson-thumb" src="lesson-${l.youtube}.jpg" alt="" loading="lazy">`:`<span class="num ${cls}">${mark}</span>`}
     <span class="txt"><b>${esc(l.t)}</b>${isNewLesson(l)?'<span class="new-label">Новый урок</span>':""}<span>${opt.why?sub:esc(sub)}</span></span>${fr&&!d?'<span class="chip dough">Бесплатно</span>':I.chev}</button>`;
 }
 function courseCard(c){
@@ -773,7 +773,7 @@ function Sheet(l){
   return `<div class="scrim" data-act="close"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(l.t)}">
     <div class="grab"></div>
     <div class="row" style="flex-wrap:wrap;gap:6px"><span class="chip">${c.icon} ${c.title}</span><span class="chip nums">Урок ${l.n}</span><span class="chip">${mins(l.m)}</span>${fr?'<span class="chip dough">🎁 Бесплатно</span>':gl?'<span class="chip">🔒 В клубе</span>':inTrack?`<span class="chip dough">${S.profile.ids.indexOf(l.id)<(S.profile.first||0)?"Приоритет":"В твоём плане"}</span>`:""}</div>
-    ${l.youtube?`<img class="lesson-cover" src="https://i.ytimg.com/vi/${l.youtube}/maxresdefault.jpg" alt="Обложка урока ${esc(l.t)}">`:""}
+    ${l.youtube?`<img class="lesson-cover" src="lesson-${l.youtube}.jpg" alt="Обложка урока ${esc(l.t)}">`:""}
     <h2 style="font-size:22px">${esc(l.t)}</h2>
     ${inTrack&&S.profile.why&&S.profile.why[l.id]?`<div class="card" style="background:var(--surface-2);padding:12px 14px;gap:4px"><span class="eyebrow">Почему тебе</span><span>${S.profile.why[l.id]}</span></div>`:""}
     <p class="muted">${esc(l.a)}</p>
